@@ -323,17 +323,9 @@
   VideoPreviewPlayer.prototype._bindEvents = function () {
     var self = this;
 
-    // Overlay: click for sound / replay from the start
+    // Overlay: clicking the video always replays from the start, with sound.
     this.overlay.addEventListener('click', function () {
-      if (self._ended || !self._provider.isPlaying()) {
-        // Play = start from the beginning, with sound.
-        self._playFromStart();
-        return;
-      }
-      if (self._provider.isMuted()) {
-        // Already playing muted: just add sound, keep the position.
-        self._unmute();
-      }
+      self._playFromStart();
     });
 
     // Play / pause toggle on the bottom bar
