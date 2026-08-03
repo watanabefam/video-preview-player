@@ -111,13 +111,26 @@ new VideoPreviewPlayer({
 });
 ```
 
-The bundled `lottie/play-button.json` is **authored in this repository** (MIT):
-a ring that scales in, a play triangle that pops in, then a gentle fade-out —
-looping on a 3s cycle. It has two layers, so `lottieColors: ['#3f72af', '#112d4e']`
-colors ring + triangle. Prefer a different look? Drop in any animation from
-the [LottieFiles free library](https://lottiefiles.com/search?q=play+button)
-(free for commercial use) — `lottieFileUrl` accepts any Lottie JSON.
-(`lottie-web` itself is MIT.)
+The bundled `lottie/play-button.json` is a **"Click to video play" button
+animation sourced from [LottieFiles](https://lottiefiles.com/)** (500×500,
+97 frames): a filled circle pops in, the play triangle appears, and three
+lines sweep around it — all in a unified `#05aae1` cyan. `lottieColors` can
+recolor layers (in order) if you want a different palette:
+
+```js
+new VideoPreviewPlayer({
+  target: '#player',
+  videoId: 'aqz-KE-bpKQ',
+  lottieFileUrl: 'lottie/play-button.json',
+  lottieColors: ['#3f72af'], // one color -> all layers
+});
+```
+
+> **Licensing note:** the animation is a LottieFiles-sourced asset. Free
+> LottieFiles items may be used in apps (including commercial) under their
+> free license, but not resold standalone. Before distributing your build,
+> confirm the item you picked is marked **Free** on LottieFiles — or drop in
+> any other Lottie JSON via `lottieFileUrl`. (`lottie-web` itself is MIT.)
 
 ## Adding providers (Vimeo / MP4 / Twitch…)
 
