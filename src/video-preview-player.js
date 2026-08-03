@@ -221,6 +221,24 @@
     return mode || '#000000';
   }
 
+  // Relative luminance of a hex color (WCAG-style).
+  function luminance(hex) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+    if (!m) return null;
+    var n = parseInt(m[1], 16);
+    var lin = function (c) {
+      c /= 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+  }
+
+  // Pick a button color that reads on the backdrop: white on dark, dark on light.
+  function contrastColor(hex) {
+    var L = luminance(hex);
+    return (L === null || L > 0.4) ? '#112d4e' : '#ffffff';
+  }
+
   /* ==============================================================
    * Core player
    * ============================================================== */
@@ -616,9 +634,15 @@
       fetch(self.options.lottieFileUrl)
         .then(function (res) { return res.json(); })
         .then(function (data) {
-          if (self.options.lottieColors && Array.isArray(data.layers)) {
+          // Unless the caller picked colors, auto-contrast against the backdrop
+          // so the button is visible on dark and light scrims alike.
+          var colors = self.options.lottieColors;
+          if (!colors && self.options.backdrop !== 'none') {
+            colors = [contrastColor(resolveBackdrop(self.options.backdrop))];
+          }
+          if (colors && Array.isArray(data.layers)) {
             data.layers.forEach(function (layer, i) {
-              var color = self.options.lottieColors[i % self.options.lottieColors.length];
+              var color = colors[i % colors.length];
               var rgb = hexToRgb(color);
               if (!rgb) return;
               (layer.shapes || []).forEach(function (shape) {

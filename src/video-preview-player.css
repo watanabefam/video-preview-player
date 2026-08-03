@@ -135,6 +135,9 @@
   width: 120px;
   height: 120px;
   display: none;
+  /* Soft halo so the button lifts off dark and light backgrounds alike */
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.28))
+          drop-shadow(0 3px 8px rgba(0, 0, 0, 0.4));
 }
 .vpp-lottie svg {
   width: 100%;

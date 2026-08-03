@@ -88,7 +88,7 @@ hosted MP4s, Twitch, etc. can be added by implementing one small interface.
 | `controlsHideDelay` | `2500` | ms of inactivity before the control bar auto-hides (while playing); `0` disables |
 | `lottieFileUrl` | bundled animation (jsDelivr) | URL/path to a Lottie `.json` play-button animation (lottie-web loads on demand from CDN; set `''` to use the CSS bars) |
 | `lottieLoop` / `lottieAutoplay` | `true` / `true` | Lottie playback |
-| `lottieColors` | `null` | `[hex, …]` recolors animation layers in order (like the original player's color mapping) |
+| `lottieColors` | `null` (auto) | `[hex, …]` recolors animation layers in order; when unset the button auto-contrasts against the backdrop (white on dark, dark on light) |
 | `lottieSize` | `120` | px size of the animation in the overlay |
 | `watermarkTextContent` | `''` | Watermark text (falls back to image mode if `watermarkImageUrl` set) |
 | `watermarkImageUrl` | `''` | Watermark image URL |
@@ -115,9 +115,10 @@ new VideoPreviewPlayer({
 The bundled `lottie/play-button.json` is the **"Click to video play button"
 animation by [MD Abdur Rahim](https://www.lottieicon.com/)** (a **free**
 LottieFiles item, 500×500, 97 frames): a filled circle pops in, the play
-triangle appears, and three lines sweep around it — all in a unified
-`#05aae1` cyan. `lottieColors` can recolor layers (in order) if you want a
-different palette:
+triangle appears, and three lines sweep around it. The button **auto-contrasts
+against the backdrop** (white on dark scrims, dark on light ones) and gets a
+soft glow halo, so it reads on any background. `lottieColors` overrides the
+auto choice:
 
 ```js
 new VideoPreviewPlayer({
