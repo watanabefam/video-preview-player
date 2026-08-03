@@ -229,8 +229,8 @@
     // Skin copy
     textPaused: 'Paused',
     textEnded: 'Ended',
-    unmuteText: 'Video is Playing\u2026',
-    unmuteTextSecondary: 'Click For Sound',
+    unmuteText: '',                 // shown while playing muted (empty = hidden)
+    unmuteTextSecondary: '',        // e.g. 'Click For Sound'
 
     // Skin colors
     colorBars: '#3f72af',
@@ -242,8 +242,8 @@
     // Behavior
     controlsHideDelay: 2500,      // ms of inactivity before the bar auto-hides (while playing)
 
-    // Lottie play-button animation (optional; falls back to CSS sound bars)
-    lottieFileUrl: '',            // URL/path to a Lottie .json animation for the play overlay
+    // Lottie play-button animation (default on; falls back to CSS sound bars)
+    lottieFileUrl: 'https://cdn.jsdelivr.net/gh/watanabefam/video-preview-player@main/lottie/play-button.json',
     lottieLoop: true,
     lottieAutoplay: true,
     lottieColors: null,           // [hex, hex, ...] recolors animation layers in order
@@ -276,6 +276,7 @@
 
     this._ended = false;
     this._unmuted = false;
+    this._interacted = false;       // HUD stays hidden until the first click
     this._hideTimer = null;
     this._volumeDragging = false;
     this._lottieAnim = null;
@@ -295,7 +296,8 @@
   VideoPreviewPlayer.prototype._initDom = function () {
     var o = this.options;
     var root = document.createElement('div');
-    root.className = 'vpp-root';
+    // Start with the control bar hidden: no HUD until the user clicks.
+    root.className = 'vpp-root vpp-controls-hidden';
     root.style.setProperty('--vpp-bars', o.colorBars);
     root.style.setProperty('--vpp-play-button', o.colorPlayButton);
     root.style.setProperty('--vpp-progress-total', o.colorProgressBarTotal);
@@ -380,12 +382,14 @@
 
     // Overlay: clicking the video always replays from the start, with sound.
     this.overlay.addEventListener('click', function () {
+      self._interacted = true; // first click unlocks the HUD
       self._playFromStart();
     });
 
     // Play / pause toggle on the bottom bar
     this.playToggle.addEventListener('click', function (e) {
       e.stopPropagation();
+      self._interacted = true;
       if (self._provider.isPlaying()) self._provider.pause();
       else self._playFromStart();
     });
@@ -400,6 +404,7 @@
       self._renderProgress(frac);
     };
     this.progress.addEventListener('pointerdown', function (e) {
+      self._interacted = true;
       seeking = true;
       self.progress.setPointerCapture(e.pointerId);
       seekFromEvent(e);
@@ -413,6 +418,7 @@
     // Mute toggle
     this.muteToggle.addEventListener('click', function (e) {
       e.stopPropagation();
+      self._interacted = true;
       if (self._provider.isMuted()) {
         // Unmuting while the slider is at 0 is pointless — give it some sound.
         if (+self.volumeSlider.value === 0) { self._provider.setVolume(100); self.volumeSlider.value = 100; }
@@ -424,7 +430,7 @@
     });
 
     // Volume slider
-    this.volumeSlider.addEventListener('pointerdown', function () { self._volumeDragging = true; });
+    this.volumeSlider.addEventListener('pointerdown', function () { self._interacted = true; self._volumeDragging = true; });
     this.volumeSlider.addEventListener('input', function () {
       var v = +self.volumeSlider.value;
       self._provider.setVolume(v);
@@ -545,6 +551,7 @@
   /* ----- auto-hiding control bar ----- */
   VideoPreviewPlayer.prototype._showControls = function () {
     this._cancelHide();
+    if (!this._interacted) return; // no HUD at all until the first click
     this.root.classList.remove('vpp-controls-hidden');
   };
 

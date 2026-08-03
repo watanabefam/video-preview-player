@@ -12,12 +12,12 @@ hosted MP4s, Twitch, etc. can be added by implementing one small interface.
 
 - ✅ Zero dependencies, ~300 lines, MIT licensed
 - ✅ Muted autoplay + loop (YouTube's own IFrame API underneath)
-- ✅ "Click For Sound" unmute overlay
+- ✅ **Bare until first click** — just the play animation; no HUD or overlay text until you click
+- ✅ Clicking **play** always restarts the video from the beginning, with sound
 - ✅ Custom play/pause, progress bar (click + drag to seek), time readout
 - ✅ Control bar auto-hides after a few seconds of inactivity while playing
 - ✅ Mute toggle + volume slider
-- ✅ Clicking **play** always restarts the video from the beginning, with sound
-- ✅ Optional Lottie play-button animation (`lottieFileUrl`) with layer recolor — falls back to a CSS animation when Lottie isn't available
+- ✅ Lottie play-button animation out of the box (`lottieFileUrl` + layer recolor; CSS bars as fallback)
 - ✅ Text or image watermark, configurable position / size / transparency
 - ✅ Fully themable colors
 - ✅ Privacy mode: uses `youtube-nocookie.com` by default
@@ -45,8 +45,6 @@ hosted MP4s, Twitch, etc. can be added by implementing one small interface.
     autoPlay: true,
     loop: true,
     muted: true,
-    unmuteText: 'Video is Playing…',
-    unmuteTextSecondary: 'Click For Sound',
     watermarkTextContent: 'Your Brand',
     watermarkPosition: 'right-top',
   });
@@ -77,15 +75,15 @@ hosted MP4s, Twitch, etc. can be added by implementing one small interface.
 | `privacyMode` | `true` | Use `youtube-nocookie.com` where possible |
 | `playerVars` | `{}` | Raw player params merged last (YouTube) |
 | `textPaused` / `textEnded` | `'Paused'` / `'Ended'` | Overlay copy in those states |
-| `unmuteText` | `'Video is Playing…'` | Overlay primary copy while muted |
-| `unmuteTextSecondary` | `'Click For Sound'` | Overlay secondary copy |
+| `unmuteText` | `''` | Overlay primary copy while playing muted (empty = hidden) |
+| `unmuteTextSecondary` | `''` | Overlay secondary copy, e.g. `'Click For Sound'` |
 | `colorBars` | `'#3f72af'` | Bottom bar accent |
 | `colorPlayButton` | `'#3f72af'` | Play/pause button color |
 | `colorProgressBarTotal` | `rgba(255,255,255,0.65)` | Progress track |
 | `colorProgressBar` | `'#112d4e'` | Progress fill |
 | `colorOverlayText` | `rgba(0,0,0,0.75)` | Paused/ended overlay tint |
 | `controlsHideDelay` | `2500` | ms of inactivity before the control bar auto-hides (while playing); `0` disables |
-| `lottieFileUrl` | `''` | URL/path to a Lottie `.json` play-button animation (lottie-web loads on demand from CDN; CSS bars remain if unset/failed) |
+| `lottieFileUrl` | bundled animation (jsDelivr) | URL/path to a Lottie `.json` play-button animation (lottie-web loads on demand from CDN; set `''` to use the CSS bars) |
 | `lottieLoop` / `lottieAutoplay` | `true` / `true` | Lottie playback |
 | `lottieColors` | `null` | `[hex, …]` recolors animation layers in order (like the original player's color mapping) |
 | `lottieSize` | `120` | px size of the animation in the overlay |
