@@ -111,11 +111,12 @@ new VideoPreviewPlayer({
 });
 ```
 
-The bundled `lottie/play-button.json` is a **"Click to video play" button
-animation sourced from [LottieFiles](https://lottiefiles.com/)** (500×500,
-97 frames): a filled circle pops in, the play triangle appears, and three
-lines sweep around it — all in a unified `#05aae1` cyan. `lottieColors` can
-recolor layers (in order) if you want a different palette:
+The bundled `lottie/play-button.json` is the **"Click to video play button"
+animation by [MD Abdur Rahim](https://www.lottieicon.com/)** (a **free**
+LottieFiles item, 500×500, 97 frames): a filled circle pops in, the play
+triangle appears, and three lines sweep around it — all in a unified
+`#05aae1` cyan. `lottieColors` can recolor layers (in order) if you want a
+different palette:
 
 ```js
 new VideoPreviewPlayer({
@@ -126,11 +127,11 @@ new VideoPreviewPlayer({
 });
 ```
 
-> **Licensing note:** the animation is a LottieFiles-sourced asset. Free
-> LottieFiles items may be used in apps (including commercial) under their
-> free license, but not resold standalone. Before distributing your build,
-> confirm the item you picked is marked **Free** on LottieFiles — or drop in
-> any other Lottie JSON via `lottieFileUrl`. (`lottie-web` itself is MIT.)
+> **Licensing:** free item, used under the [Lottie Simple License](https://lottiefiles.com/page/license)
+> — usable in your apps (including commercial), not resellable as a standalone
+> animation. Source: <https://lottiefiles.com/free-animation/click-to-video-play-button-hSNkC9gdMb>
+> · Author: MD Abdur Rahim (<https://www.lottieicon.com/>).
+> (`lottie-web` itself is MIT.)
 
 ## Adding providers (Vimeo / MP4 / Twitch…)
 
