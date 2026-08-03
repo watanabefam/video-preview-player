@@ -37,6 +37,7 @@
    *                          PROVIDER_STATE constants below
    *   play(), pause()        transport control
    *   mute(), unmute()       audio control
+   *   getVolume() -> number (0-100), setVolume(0-100)
    *   seekTo(seconds)        seek (best-effort)
    *   isMuted() -> boolean
    *   isPlaying() -> boolean
@@ -162,6 +163,8 @@
   YouTubeProvider.prototype.pause = function () { if (this._player) this._player.pauseVideo(); };
   YouTubeProvider.prototype.mute = function () { if (this._player) this._player.mute(); };
   YouTubeProvider.prototype.unmute = function () { if (this._player) this._player.unMute(); };
+  YouTubeProvider.prototype.getVolume = function () { return this._player ? this._player.getVolume() : 100; };
+  YouTubeProvider.prototype.setVolume = function (v) { if (this._player) this._player.setVolume(v); };
   YouTubeProvider.prototype.seekTo = function (t) { if (this._player) this._player.seekTo(t, true); };
   YouTubeProvider.prototype.isMuted = function () {
     return this._player ? this._player.isMuted() : this.options.muted !== false;
@@ -209,6 +212,9 @@
     colorProgressBar: '#112d4e',
     colorOverlayText: 'rgba(0,0,0,0.75)',
 
+    // Behavior
+    controlsHideDelay: 2500,      // ms of inactivity before the bar auto-hides (while playing)
+
     // Watermark
     watermarkTextContent: '',
     watermarkImageUrl: '',
@@ -236,6 +242,8 @@
 
     this._ended = false;
     this._unmuted = false;
+    this._hideTimer = null;
+    this._volumeDragging = false;
     this._initDom();
     this._provider = new Klass(this.slot, this.options);
     this._wireProvider();
@@ -281,7 +289,14 @@
       '<div class="vpp-progress" role="slider" aria-label="Seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">' +
       '  <div class="vpp-progress-fill"></div>' +
       '</div>' +
-      '<span class="vpp-time">0:00</span>';
+      '<span class="vpp-time">0:00</span>' +
+      '<div class="vpp-volume">' +
+      '  <button type="button" class="vpp-mute-toggle" aria-label="Mute">' +
+      '    <svg class="vpp-ico vpp-ico-unmuted" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>' +
+      '    <svg class="vpp-ico vpp-ico-muted" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4 9.91 6.09 12 8.18V4z"/></svg>' +
+      '  </button>' +
+      '  <input type="range" class="vpp-volume-slider" min="0" max="100" step="5" value="100" aria-label="Volume" />' +
+      '</div>';
 
     var watermark = document.createElement('div');
     watermark.className = 'vpp-watermark vpp-watermark--' + o.watermarkPosition;
@@ -316,6 +331,8 @@
     this.progress = controls.querySelector('.vpp-progress');
     this.progressFill = controls.querySelector('.vpp-progress-fill');
     this.timeEl = controls.querySelector('.vpp-time');
+    this.muteToggle = controls.querySelector('.vpp-mute-toggle');
+    this.volumeSlider = controls.querySelector('.vpp-volume-slider');
 
     this._bindEvents();
   };
@@ -354,6 +371,47 @@
     });
     this.progress.addEventListener('pointerup', function () { seeking = false; });
     this.progress.addEventListener('pointercancel', function () { seeking = false; });
+
+    // Mute toggle
+    this.muteToggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (self._provider.isMuted()) {
+        // Unmuting while the slider is at 0 is pointless — give it some sound.
+        if (+self.volumeSlider.value === 0) { self._provider.setVolume(100); self.volumeSlider.value = 100; }
+        self._provider.unmute();
+      } else {
+        self._provider.mute();
+      }
+      self._renderState();
+    });
+
+    // Volume slider
+    this.volumeSlider.addEventListener('pointerdown', function () { self._volumeDragging = true; });
+    this.volumeSlider.addEventListener('input', function () {
+      var v = +self.volumeSlider.value;
+      self._provider.setVolume(v);
+      if (v > 0 && self._provider.isMuted()) self._provider.unmute();
+      self._renderState();
+    });
+    this.volumeSlider.addEventListener('change', function () { self._volumeDragging = false; });
+    this.volumeSlider.addEventListener('pointerup', function () { self._volumeDragging = false; });
+
+    // Auto-hide the control bar after a few seconds of inactivity (while playing)
+    this.root.addEventListener('mousemove', function () {
+      self._showControls();
+      self._scheduleHide();
+    });
+    this.root.addEventListener('touchstart', function () {
+      self._showControls();
+      self._scheduleHide();
+    }, { passive: true });
+    this.controls.addEventListener('mouseenter', function () {
+      self._cancelHide();
+      self._showControls();
+    });
+    this.controls.addEventListener('mouseleave', function () {
+      if (self._provider.isPlaying()) self._scheduleHide();
+    });
   };
 
   /* ----- provider wiring ----- */
@@ -361,12 +419,17 @@
     var self = this;
     this._provider.onReady(function () {
       self._renderState();
+      if (self._provider.isPlaying()) self._scheduleHide();
     });
     this._provider.onStateChange(function (state) {
       if (state === PROVIDER_STATE.PLAYING) {
         self._ended = false;
+        self._scheduleHide();
       } else if (state === PROVIDER_STATE.ENDED) {
         self._ended = !self.options.loop;
+        self._showControls();
+      } else if (state === PROVIDER_STATE.PAUSED) {
+        self._showControls();
       }
       self._renderState();
     });
@@ -398,6 +461,9 @@
     this.root.classList.toggle('vpp-is-playing', playing);
     this.playToggle.setAttribute('aria-label', playing ? 'Pause' : 'Play');
 
+    // Mute icon + volume slider
+    this._renderVolume();
+
     // Overlay visibility
     if (!playing) {
       this.overlay.classList.add('vpp-overlay--tinted');
@@ -428,6 +494,36 @@
     this.progress.setAttribute('aria-valuenow', String(pct));
   };
 
+  VideoPreviewPlayer.prototype._renderVolume = function () {
+    var muted = this._provider.isMuted();
+    this.root.classList.toggle('vpp-is-muted', muted);
+    this.muteToggle.setAttribute('aria-label', muted ? 'Unmute' : 'Mute');
+    if (!this._volumeDragging) {
+      var v = this._provider.getVolume();
+      if (v !== +this.volumeSlider.value) this.volumeSlider.value = v;
+    }
+  };
+
+  /* ----- auto-hiding control bar ----- */
+  VideoPreviewPlayer.prototype._showControls = function () {
+    this._cancelHide();
+    this.root.classList.remove('vpp-controls-hidden');
+  };
+
+  VideoPreviewPlayer.prototype._scheduleHide = function () {
+    var self = this;
+    this._cancelHide();
+    this._hideTimer = setTimeout(function () {
+      if (self._provider.isPlaying() && !self.controls.contains(document.activeElement)) {
+        self.root.classList.add('vpp-controls-hidden');
+      }
+    }, this.options.controlsHideDelay);
+  };
+
+  VideoPreviewPlayer.prototype._cancelHide = function () {
+    if (this._hideTimer) { clearTimeout(this._hideTimer); this._hideTimer = null; }
+  };
+
   VideoPreviewPlayer.prototype._startTicker = function () {
     var self = this;
     this._ticker = setInterval(function () {
@@ -436,11 +532,13 @@
       var dur = self._provider.getDuration() || 0;
       if (dur) self._renderProgress(cur / dur);
       self.timeEl.textContent = fmtTime(cur) + (dur ? ' / ' + fmtTime(dur) : '');
+      self._renderVolume();
     }, 250);
   };
 
   /* ----- teardown ----- */
   VideoPreviewPlayer.prototype.destroy = function () {
+    this._cancelHide();
     if (this._ticker) clearInterval(this._ticker);
     if (this._provider) this._provider.destroy();
     if (this.root && this.root.parentNode) this.root.parentNode.removeChild(this.root);

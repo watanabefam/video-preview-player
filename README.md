@@ -14,6 +14,8 @@ hosted MP4s, Twitch, etc. can be added by implementing one small interface.
 - ✅ Muted autoplay + loop (YouTube's own IFrame API underneath)
 - ✅ "Click For Sound" unmute overlay
 - ✅ Custom play/pause, progress bar (click + drag to seek), time readout
+- ✅ Control bar auto-hides after a few seconds of inactivity while playing
+- ✅ Mute toggle + volume slider
 - ✅ Clicking **play** always restarts the video from the beginning, with sound
 - ✅ Text or image watermark, configurable position / size / transparency
 - ✅ Fully themable colors
@@ -81,6 +83,7 @@ hosted MP4s, Twitch, etc. can be added by implementing one small interface.
 | `colorProgressBarTotal` | `rgba(255,255,255,0.65)` | Progress track |
 | `colorProgressBar` | `'#112d4e'` | Progress fill |
 | `colorOverlayText` | `rgba(0,0,0,0.75)` | Paused/ended overlay tint |
+| `controlsHideDelay` | `2500` | ms of inactivity before the control bar auto-hides (while playing); `0` disables |
 | `watermarkTextContent` | `''` | Watermark text (falls back to image mode if `watermarkImageUrl` set) |
 | `watermarkImageUrl` | `''` | Watermark image URL |
 | `watermarkTextColor` | `'#ffffff'` | Watermark text color |
