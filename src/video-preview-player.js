@@ -41,6 +41,7 @@
    *   seekTo(seconds)        seek (best-effort)
    *   isMuted() -> boolean
    *   isPlaying() -> boolean
+   *   getState() -> number   (optional; raw provider state, e.g. to tell buffering from paused)
    *   getCurrentTime() -> number (seconds)
    *   getDuration() -> number (seconds)
    *   destroy()              tear the media element down
@@ -171,6 +172,9 @@
   };
   YouTubeProvider.prototype.isPlaying = function () {
     return this._player ? this._player.getPlayerState() === PROVIDER_STATE.PLAYING : false;
+  };
+  YouTubeProvider.prototype.getState = function () {
+    return this._player ? this._player.getPlayerState() : PROVIDER_STATE.PAUSED;
   };
   YouTubeProvider.prototype.getCurrentTime = function () {
     return this._player ? this._player.getCurrentTime() : 0;
@@ -315,6 +319,7 @@
     this._lottieAnim = null;
     this._initDom();
     this._syncWatermark();
+    if (this.options.autoPlay) this._beginPlayStart();
     this._provider = new Klass(this.slot, this.options);
     this._wireProvider();
     this._startTicker();
@@ -538,16 +543,22 @@
   // Play is always "start from the beginning, with sound" in this player.
   VideoPreviewPlayer.prototype._playFromStart = function (e) {
     this._ended = false;
+    this._beginPlayStart();
+    this._provider.seekTo(0);
+    this._unmute(e);
+  };
+
+  // Marks the start-of-play window (also used for initial autoplay): suppresses
+  // the paused UI until PLAYING actually fires, with a safety net so the
+  // overlay can never get stuck hidden.
+  VideoPreviewPlayer.prototype._beginPlayStart = function () {
     this._startingPlay = true;
     var self = this;
     clearTimeout(this._startTimer);
-    // Safety net: never leave the overlay stuck hidden if play never fires.
     this._startTimer = setTimeout(function () {
       self._startingPlay = false;
       self._renderState();
     }, 2500);
-    this._provider.seekTo(0);
-    this._unmute(e);
   };
 
   // Material-style ripple: a circle expands from the click point and fades.
@@ -582,8 +593,9 @@
 
     // Overlay visibility (the backdrop scrim is part of the overlay)
     if (!playing) {
-      if (this._startingPlay) {
-        // Brief window after clicking play: don't flash the paused UI.
+      var rawState = this._provider.getState ? this._provider.getState() : PROVIDER_STATE.PAUSED;
+      if (this._startingPlay || rawState === PROVIDER_STATE.BUFFERING) {
+        // Play-start or buffering window: don't flash the paused UI.
         this.overlay.classList.add('vpp-overlay--hidden');
       } else {
         this.textPrimary.textContent = this._ended ? this.options.textEnded : this.options.textPaused;
