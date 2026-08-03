@@ -25,6 +25,30 @@
       background: #334155; color: #e2e8f0; text-decoration: none; font-size: 0.9rem;
     }
     .btn:hover { background: #475569; }
+    .cfg-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .cfg-grid label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+    .cfg-grid select,
+    .cfg-grid input[type="text"] {
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-size: 0.9rem;
+    }
+    .cfg-grid select:focus,
+    .cfg-grid input[type="text"]:focus { outline: 1px solid #3f72af; }
     footer { margin-top: 48px; color: #64748b; font-size: 0.85rem; text-align: center; }
   </style>
 </head>
@@ -37,6 +61,72 @@
     </p>
 
     <div class="grid">
+      <div class="card">
+        <h2>Live configurator — try every option</h2>
+        <div class="cfg-grid">
+          <label>Backdrop
+            <select id="cfg-backdrop">
+              <option value="dark" selected>dark</option>
+              <option value="light">light</option>
+              <option value="none">none</option>
+              <option value="#112d4e">custom #112d4e</option>
+              <option value="#3f72af">custom #3f72af</option>
+            </select>
+          </label>
+          <label>Backdrop opacity
+            <select id="cfg-opacity">
+              <option value="0.25">0.25</option>
+              <option value="0.4" selected>0.4</option>
+              <option value="0.6">0.6</option>
+              <option value="0.8">0.8</option>
+            </select>
+          </label>
+          <label>Dismiss transition
+            <select id="cfg-transition">
+              <option value="fade" selected>fade</option>
+              <option value="ripple">ripple</option>
+              <option value="zoom">zoom</option>
+              <option value="slide-up">slide-up</option>
+              <option value="blur">blur</option>
+            </select>
+          </label>
+          <label>Play button
+            <select id="cfg-lottie">
+              <option value="on" selected>Lottie play button</option>
+              <option value="off">CSS bars</option>
+            </select>
+          </label>
+          <label>Button color
+            <select id="cfg-lottiecolor">
+              <option value="auto" selected>auto (contrast)</option>
+              <option value="#ffffff">white</option>
+              <option value="#05aae1">cyan (original)</option>
+              <option value="#112d4e">dark navy</option>
+            </select>
+          </label>
+          <label>Watermark timing
+            <select id="cfg-wmtiming">
+              <option value="always" selected>always</option>
+              <option value="before">before</option>
+              <option value="after">after</option>
+            </select>
+          </label>
+          <label>Watermark position
+            <select id="cfg-wmpos">
+              <option value="right-top" selected>right-top</option>
+              <option value="left-top">left-top</option>
+              <option value="left-bottom">left-bottom</option>
+              <option value="right-bottom">right-bottom</option>
+              <option value="center">center</option>
+            </select>
+          </label>
+          <label>Watermark text
+            <input id="cfg-wmtext" type="text" value="PREVIEW" />
+          </label>
+        </div>
+        <div id="player-config"></div>
+      </div>
+
       <div class="card">
         <h2>1 · Default skin — watermark after click <code>(watermarkTiming)</code></h2>
         <div id="player-a"></div>
@@ -125,6 +215,71 @@
       backdropOpacity: 0.35,
       backdropTransition: 'ripple',
     });
+
+    // ----- Live configurator: rebuild the player when any option changes -----
+    (function () {
+      var cfg = {
+        videoId: 'aqz-KE-bpKQ',
+        provider: 'youtube',
+        autoPlay: true,
+        loop: true,
+        muted: true,
+        backdrop: 'dark',
+        backdropOpacity: 0.4,
+        backdropTransition: 'fade',
+        lottie: 'on',
+        lottieColor: 'auto',
+        watermarkTiming: 'always',
+        watermarkPosition: 'right-top',
+        watermarkTextContent: 'PREVIEW',
+      };
+      var player = null;
+
+      function build() {
+        if (player) { player.destroy(); player = null; }
+        document.getElementById('player-config').innerHTML = '';
+        player = new VideoPreviewPlayer({
+          target: '#player-config',
+          provider: cfg.provider,
+          videoId: cfg.videoId,
+          autoPlay: cfg.autoPlay,
+          loop: cfg.loop,
+          muted: cfg.muted,
+          backdrop: cfg.backdrop,
+          backdropOpacity: cfg.backdropOpacity,
+          backdropTransition: cfg.backdropTransition,
+          lottieFileUrl: cfg.lottie === 'on' ? 'lottie/play-button.json' : '',
+          lottieColors: cfg.lottieColor === 'auto' ? null : [cfg.lottieColor],
+          watermarkTiming: cfg.watermarkTiming,
+          watermarkPosition: cfg.watermarkPosition,
+          watermarkTextContent: cfg.watermarkTextContent,
+        });
+      }
+
+      function bind(id, prop) {
+        var el = document.getElementById(id);
+        el.addEventListener('change', function () {
+          var v = el.value;
+          if (prop === 'backdropOpacity') v = parseFloat(v);
+          cfg[prop] = v;
+          build();
+        });
+      }
+
+      bind('cfg-backdrop', 'backdrop');
+      bind('cfg-opacity', 'backdropOpacity');
+      bind('cfg-transition', 'backdropTransition');
+      bind('cfg-lottie', 'lottie');
+      bind('cfg-lottiecolor', 'lottieColor');
+      bind('cfg-wmtiming', 'watermarkTiming');
+      bind('cfg-wmpos', 'watermarkPosition');
+      document.getElementById('cfg-wmtext').addEventListener('change', function () {
+        cfg.watermarkTextContent = this.value.trim();
+        build();
+      });
+
+      build();
+    })();
   </script>
 </body>
 </html>

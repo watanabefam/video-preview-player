@@ -30,6 +30,11 @@ hosted MP4s, Twitch, etc. can be added by implementing one small interface.
 
 <https://watanabefam.github.io/video-preview-player/>
 
+The demo includes a **live configurator** — dropdowns for backdrop, opacity,
+dismiss transition, play-button style/color, watermark timing/position/text —
+that rebuilds the player on the fly so you can try every option, plus preset
+showcase cards.
+
 ## Quick start
 
 ```html
