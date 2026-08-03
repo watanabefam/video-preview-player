@@ -283,7 +283,7 @@
  * ---------------------------------------------------------------- */
 .vpp-watermark {
   position: absolute;
-  z-index: 4;
+  z-index: 1; /* below the play-button overlay and the control bar */
   font-weight: 800;
   line-height: 1;
   pointer-events: none;

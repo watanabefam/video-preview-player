@@ -83,8 +83,8 @@
           </label>
           <label>Dismiss transition
             <select id="cfg-transition">
-              <option value="fade" selected>fade</option>
-              <option value="ripple">ripple</option>
+              <option value="ripple" selected>ripple</option>
+              <option value="fade">fade</option>
               <option value="zoom">zoom</option>
               <option value="slide-up">slide-up</option>
               <option value="blur">blur</option>
@@ -104,11 +104,18 @@
               <option value="#112d4e">dark navy</option>
             </select>
           </label>
+          <label>Watermark
+            <select id="cfg-wm">
+              <option value="none" selected>none</option>
+              <option value="text">text</option>
+            </select>
+          </label>
           <label>Watermark timing
             <select id="cfg-wmtiming">
               <option value="always" selected>always</option>
               <option value="before">before</option>
               <option value="after">after</option>
+              <option value="none">none</option>
             </select>
           </label>
           <label>Watermark position
@@ -121,7 +128,7 @@
             </select>
           </label>
           <label>Watermark text
-            <input id="cfg-wmtext" type="text" value="PREVIEW" />
+            <input id="cfg-wmtext" type="text" value="PREVIEW" disabled />
           </label>
         </div>
         <div id="player-config"></div>
@@ -226,11 +233,12 @@
         muted: true,
         backdrop: 'dark',
         backdropOpacity: 0.4,
-        backdropTransition: 'fade',
+        backdropTransition: 'ripple',
         lottie: 'on',
         lottieColor: 'auto',
         watermarkTiming: 'always',
         watermarkPosition: 'right-top',
+        watermark: 'none',
         watermarkTextContent: 'PREVIEW',
       };
       var player = null;
@@ -252,7 +260,7 @@
           lottieColors: cfg.lottieColor === 'auto' ? null : [cfg.lottieColor],
           watermarkTiming: cfg.watermarkTiming,
           watermarkPosition: cfg.watermarkPosition,
-          watermarkTextContent: cfg.watermarkTextContent,
+          watermarkTextContent: cfg.watermark === 'text' ? cfg.watermarkTextContent : '',
         });
       }
 
@@ -273,6 +281,11 @@
       bind('cfg-lottiecolor', 'lottieColor');
       bind('cfg-wmtiming', 'watermarkTiming');
       bind('cfg-wmpos', 'watermarkPosition');
+      document.getElementById('cfg-wm').addEventListener('change', function () {
+        cfg.watermark = this.value;
+        document.getElementById('cfg-wmtext').disabled = this.value === 'none';
+        build();
+      });
       document.getElementById('cfg-wmtext').addEventListener('change', function () {
         cfg.watermarkTextContent = this.value.trim();
         build();

@@ -89,7 +89,7 @@ showcase cards.
 | `colorProgressBar` | `'#112d4e'` | Progress fill |
 | `backdrop` | `'dark'` | Pre-click scrim behind the play button: `'dark'` \| `'light'` \| `'none'` \| any CSS color |
 | `backdropOpacity` | `0.4` | Scrim strength (0–1) |
-| `backdropTransition` | `'fade'` | Dismiss effect on click: `'fade'` \| `'ripple'` \| `'zoom'` \| `'slide-up'` \| `'blur'` |
+| `backdropTransition` | `'ripple'` | Dismiss effect on click: `'fade'` \| `'ripple'` \| `'zoom'` \| `'slide-up'` \| `'blur'` |
 | `controlsHideDelay` | `2500` | ms of inactivity before the control bar auto-hides (while playing); `0` disables |
 | `lottieFileUrl` | bundled animation (jsDelivr) | URL/path to a Lottie `.json` play-button animation (lottie-web loads on demand from CDN; set `''` to use the CSS bars) |
 | `lottieLoop` / `lottieAutoplay` | `true` / `true` | Lottie playback |
@@ -149,8 +149,8 @@ it with one of five pure-CSS transitions (zero dependencies):
 
 | Transition | Effect |
 |---|---|
-| `fade` | overlay simply fades out (default) |
-| `ripple` | material-style circle expands from the click point |
+| `ripple` | material-style circle expands from the click point (default) |
+| `fade` | overlay simply fades out |
 | `zoom` | overlay scales up while fading |
 | `slide-up` | overlay slides up and away |
 | `blur` | overlay blurs out |

@@ -271,7 +271,7 @@
     // Pre-click backdrop & dismiss transition
     backdrop: 'dark',             // 'dark' | 'light' | 'none' | any CSS color — scrim behind the play button
     backdropOpacity: 0.4,         // 0-1 scrim strength
-    backdropTransition: 'fade',   // 'fade' | 'ripple' | 'zoom' | 'slide-up' | 'blur'
+    backdropTransition: 'ripple', // 'fade' | 'ripple' | 'zoom' | 'slide-up' | 'blur'
 
     // Behavior
     controlsHideDelay: 2500,      // ms of inactivity before the bar auto-hides (while playing)
@@ -290,7 +290,7 @@
     watermarkTransparency: 0,     // 0-100
     watermarkSize: 150,
     watermarkPosition: 'right-top', // left-top | right-top | left-bottom | right-bottom | center
-    watermarkTiming: 'always',    // 'always' | 'before' (pre-click) | 'after' (post-click)
+    watermarkTiming: 'always',    // 'always' | 'before' | 'after' | 'none' (off)
   };
 
   function VideoPreviewPlayer(options) {
@@ -619,9 +619,11 @@
   VideoPreviewPlayer.prototype._syncWatermark = function () {
     if (!this.watermark) return;
     var t = this.options.watermarkTiming;
-    var show = t === 'always' ||
-               (t === 'before' && !this._interacted) ||
-               (t === 'after' && this._interacted);
+    var show = t !== 'none' && (
+      t === 'always' ||
+      (t === 'before' && !this._interacted) ||
+      (t === 'after' && this._interacted)
+    );
     this.watermark.classList.toggle('vpp-hidden', !show);
   };
 
