@@ -27,25 +27,25 @@
     .btn:hover { background: #475569; }
     .cfg-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
       margin-bottom: 16px;
     }
     .cfg-grid label {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      font-size: 0.8rem;
+      gap: 3px;
+      font-size: 0.75rem;
       color: #94a3b8;
     }
     .cfg-grid select,
     .cfg-grid input[type="text"] {
-      padding: 6px 8px;
+      padding: 5px 6px;
       border-radius: 6px;
       border: 1px solid #334155;
       background: #0f172a;
       color: #e2e8f0;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
     .cfg-grid select:focus,
     .cfg-grid input[type="text"]:focus { outline: 1px solid #3f72af; }
@@ -238,7 +238,7 @@
     new VideoPreviewPlayer({
       target: '#player-e',
       provider: 'html5',
-      src: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+      src: 'https://www.w3schools.com/html/mov_bbb.mp4',
       autoPlay: true,
       loop: true,
       muted: true,
@@ -249,7 +249,7 @@
 
     // ----- Live configurator: rebuild the player when any option changes -----
     (function () {
-      var MP4_SRC = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
+      var MP4_SRC = 'https://www.w3schools.com/html/mov_bbb.mp4';
       var cfg = {
         source: 'youtube',
         videoId: 'aqz-KE-bpKQ',
