@@ -137,7 +137,14 @@
       // YouTube only honors loop=1 when a playlist is supplied.
       if (playerVars.loop && !playerVars.playlist) playerVars.playlist = o.videoId;
 
-      self._player = new res.YT.Player(self.slot, {
+      // YT.Player replaces the element it's given with the <iframe> (preserving
+      // its attributes/inline style). Give it a holder inside the slot so the
+      // iframe always lands inside `.vpp-slot`, sized to fill it.
+      var holder = document.createElement('div');
+      holder.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+      self.slot.appendChild(holder);
+
+      self._player = new res.YT.Player(holder, {
         host: res.host,
         videoId: o.videoId,
         playerVars: playerVars,
@@ -316,18 +323,15 @@
   VideoPreviewPlayer.prototype._bindEvents = function () {
     var self = this;
 
-    // Overlay: click for sound / resume / replay
+    // Overlay: click for sound / replay from the start
     this.overlay.addEventListener('click', function () {
-      if (self._ended) {
-        self._ended = false;
-        self._provider.play();
-        return;
-      }
-      if (!self._provider.isPlaying()) {
-        self._provider.play();
+      if (self._ended || !self._provider.isPlaying()) {
+        // Play = start from the beginning, with sound.
+        self._playFromStart();
         return;
       }
       if (self._provider.isMuted()) {
+        // Already playing muted: just add sound, keep the position.
         self._unmute();
       }
     });
@@ -336,7 +340,7 @@
     this.playToggle.addEventListener('click', function (e) {
       e.stopPropagation();
       if (self._provider.isPlaying()) self._provider.pause();
-      else { self._ended = false; self._provider.play(); }
+      else self._playFromStart();
     });
 
     // Seek on the progress bar (click + drag)
@@ -384,6 +388,13 @@
     // Fade the overlay away once there is sound.
     var self = this;
     setTimeout(function () { self._renderState(); }, 1200);
+  };
+
+  // Play is always "start from the beginning, with sound" in this player.
+  VideoPreviewPlayer.prototype._playFromStart = function () {
+    this._ended = false;
+    this._provider.seekTo(0);
+    this._unmute();
   };
 
   /* ----- state / skin rendering ----- */

@@ -14,6 +14,7 @@ hosted MP4s, Twitch, etc. can be added by implementing one small interface.
 - ✅ Muted autoplay + loop (YouTube's own IFrame API underneath)
 - ✅ "Click For Sound" unmute overlay
 - ✅ Custom play/pause, progress bar (click + drag to seek), time readout
+- ✅ Clicking **play** always restarts the video from the beginning, with sound
 - ✅ Text or image watermark, configurable position / size / transparency
 - ✅ Fully themable colors
 - ✅ Privacy mode: uses `youtube-nocookie.com` by default
