@@ -308,6 +308,8 @@
     this._ended = false;
     this._unmuted = false;
     this._interacted = false;       // HUD stays hidden until the first click
+    this._startingPlay = false;     // suppresses the paused UI during play-start
+    this._startTimer = null;
     this._hideTimer = null;
     this._volumeDragging = false;
     this._lottieAnim = null;
@@ -504,6 +506,7 @@
     this._provider.onStateChange(function (state) {
       if (state === PROVIDER_STATE.PLAYING) {
         self._ended = false;
+        self._startingPlay = false; // play actually started
         self._scheduleHide();
       } else if (state === PROVIDER_STATE.ENDED) {
         self._ended = !self.options.loop;
@@ -535,6 +538,14 @@
   // Play is always "start from the beginning, with sound" in this player.
   VideoPreviewPlayer.prototype._playFromStart = function (e) {
     this._ended = false;
+    this._startingPlay = true;
+    var self = this;
+    clearTimeout(this._startTimer);
+    // Safety net: never leave the overlay stuck hidden if play never fires.
+    this._startTimer = setTimeout(function () {
+      self._startingPlay = false;
+      self._renderState();
+    }, 2500);
     this._provider.seekTo(0);
     this._unmute(e);
   };
@@ -571,10 +582,15 @@
 
     // Overlay visibility (the backdrop scrim is part of the overlay)
     if (!playing) {
-      this.textPrimary.textContent = this._ended ? this.options.textEnded : this.options.textPaused;
-      this.textSecondary.textContent = '';
-      this.soundBars.classList.add('vpp-hidden');
-      this.overlay.classList.remove('vpp-overlay--hidden');
+      if (this._startingPlay) {
+        // Brief window after clicking play: don't flash the paused UI.
+        this.overlay.classList.add('vpp-overlay--hidden');
+      } else {
+        this.textPrimary.textContent = this._ended ? this.options.textEnded : this.options.textPaused;
+        this.textSecondary.textContent = '';
+        this.soundBars.classList.add('vpp-hidden');
+        this.overlay.classList.remove('vpp-overlay--hidden');
+      }
     } else if (muted && !this._unmuted) {
       this.textPrimary.textContent = this.options.unmuteText;
       this.textSecondary.textContent = this.options.unmuteTextSecondary;
@@ -695,6 +711,7 @@
   /* ----- teardown ----- */
   VideoPreviewPlayer.prototype.destroy = function () {
     this._cancelHide();
+    if (this._startTimer) clearTimeout(this._startTimer);
     if (this._ticker) clearInterval(this._ticker);
     if (this._lottieAnim) this._lottieAnim.destroy();
     if (this._provider) this._provider.destroy();
