@@ -186,6 +186,33 @@
 
   providers.youtube = YouTubeProvider;
 
+  /* --------------------------------------------------------------
+   * Lottie play-button animation (optional, no hard dependency)
+   * ------------------------------------------------------------ */
+  var lottiePromise = null;
+
+  function loadLottie() {
+    if (window.lottie) return Promise.resolve(window.lottie);
+    if (!lottiePromise) {
+      lottiePromise = new Promise(function (resolve) {
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/lottie-web@5/build/player/lottie.min.js';
+        s.onload = function () { resolve(window.lottie || null); };
+        s.onerror = function () { resolve(null); }; // non-fatal: CSS bars remain
+        document.head.appendChild(s);
+      });
+    }
+    return lottiePromise;
+  }
+
+  // Lottie colors are [r, g, b, a] with 0-1 components.
+  function hexToRgb(hex) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+    if (!m) return null;
+    var n = parseInt(m[1], 16);
+    return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, 1];
+  }
+
   /* ==============================================================
    * Core player
    * ============================================================== */
@@ -214,6 +241,13 @@
 
     // Behavior
     controlsHideDelay: 2500,      // ms of inactivity before the bar auto-hides (while playing)
+
+    // Lottie play-button animation (optional; falls back to CSS sound bars)
+    lottieFileUrl: '',            // URL/path to a Lottie .json animation for the play overlay
+    lottieLoop: true,
+    lottieAutoplay: true,
+    lottieColors: null,           // [hex, hex, ...] recolors animation layers in order
+    lottieSize: 120,              // px
 
     // Watermark
     watermarkTextContent: '',
@@ -244,10 +278,12 @@
     this._unmuted = false;
     this._hideTimer = null;
     this._volumeDragging = false;
+    this._lottieAnim = null;
     this._initDom();
     this._provider = new Klass(this.slot, this.options);
     this._wireProvider();
     this._startTicker();
+    if (this.options.lottieFileUrl) this._setupLottie();
   }
 
   /* ----- static API ----- */
@@ -273,6 +309,7 @@
     overlay.className = 'vpp-overlay';
     overlay.innerHTML =
       '<div class="vpp-overlay-inner">' +
+      '  <div class="vpp-lottie"></div>' +
       '  <span class="vpp-sound-bars" aria-hidden="true"><i></i><i></i><i></i></span>' +
       '  <span class="vpp-sound-bars vpp-sound-bars--big" aria-hidden="true"><i></i><i></i><i></i></span>' +
       '  <span class="vpp-text-primary"></span>' +
@@ -326,6 +363,7 @@
     this.textPrimary = overlay.querySelector('.vpp-text-primary');
     this.textSecondary = overlay.querySelector('.vpp-text-secondary');
     this.soundBars = overlay.querySelector('.vpp-sound-bars');
+    this.lottieEl = overlay.querySelector('.vpp-lottie');
     this.controls = controls;
     this.playToggle = controls.querySelector('.vpp-play-toggle');
     this.progress = controls.querySelector('.vpp-progress');
@@ -524,6 +562,46 @@
     if (this._hideTimer) { clearTimeout(this._hideTimer); this._hideTimer = null; }
   };
 
+  /* ----- lottie play-button animation (optional) ----- */
+  VideoPreviewPlayer.prototype._setupLottie = function () {
+    var self = this;
+    var el = this.lottieEl;
+    el.style.width = this.options.lottieSize + 'px';
+    el.style.height = this.options.lottieSize + 'px';
+
+    loadLottie().then(function (lottie) {
+      if (!lottie || !self.root || !self.root.isConnected) return;
+
+      // Fetch the animation data ourselves so we can recolor layers,
+      // mirroring the original player's color-mapping behaviour.
+      fetch(self.options.lottieFileUrl)
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (self.options.lottieColors && Array.isArray(data.layers)) {
+            data.layers.forEach(function (layer, i) {
+              var color = self.options.lottieColors[i % self.options.lottieColors.length];
+              var rgb = hexToRgb(color);
+              if (!rgb) return;
+              (layer.shapes || []).forEach(function (shape) {
+                (shape.it || []).forEach(function (it) {
+                  if ((it.ty === 'st' || it.ty === 'fl') && it.c && it.c.k) it.c.k = rgb;
+                });
+              });
+            });
+          }
+          self._lottieAnim = lottie.loadAnimation({
+            container: el,
+            renderer: 'svg',
+            loop: self.options.lottieLoop,
+            autoplay: self.options.lottieAutoplay,
+            animationData: data,
+          });
+          self.root.classList.add('vpp-has-lottie'); // swap CSS bars for the animation
+        })
+        .catch(function () { /* non-fatal: keep the CSS sound bars */ });
+    });
+  };
+
   VideoPreviewPlayer.prototype._startTicker = function () {
     var self = this;
     this._ticker = setInterval(function () {
@@ -540,6 +618,7 @@
   VideoPreviewPlayer.prototype.destroy = function () {
     this._cancelHide();
     if (this._ticker) clearInterval(this._ticker);
+    if (this._lottieAnim) this._lottieAnim.destroy();
     if (this._provider) this._provider.destroy();
     if (this.root && this.root.parentNode) this.root.parentNode.removeChild(this.root);
   };

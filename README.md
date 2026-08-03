@@ -17,6 +17,7 @@ hosted MP4s, Twitch, etc. can be added by implementing one small interface.
 - ✅ Control bar auto-hides after a few seconds of inactivity while playing
 - ✅ Mute toggle + volume slider
 - ✅ Clicking **play** always restarts the video from the beginning, with sound
+- ✅ Optional Lottie play-button animation (`lottieFileUrl`) with layer recolor — falls back to a CSS animation when Lottie isn't available
 - ✅ Text or image watermark, configurable position / size / transparency
 - ✅ Fully themable colors
 - ✅ Privacy mode: uses `youtube-nocookie.com` by default
@@ -84,12 +85,37 @@ hosted MP4s, Twitch, etc. can be added by implementing one small interface.
 | `colorProgressBar` | `'#112d4e'` | Progress fill |
 | `colorOverlayText` | `rgba(0,0,0,0.75)` | Paused/ended overlay tint |
 | `controlsHideDelay` | `2500` | ms of inactivity before the control bar auto-hides (while playing); `0` disables |
+| `lottieFileUrl` | `''` | URL/path to a Lottie `.json` play-button animation (lottie-web loads on demand from CDN; CSS bars remain if unset/failed) |
+| `lottieLoop` / `lottieAutoplay` | `true` / `true` | Lottie playback |
+| `lottieColors` | `null` | `[hex, …]` recolors animation layers in order (like the original player's color mapping) |
+| `lottieSize` | `120` | px size of the animation in the overlay |
 | `watermarkTextContent` | `''` | Watermark text (falls back to image mode if `watermarkImageUrl` set) |
 | `watermarkImageUrl` | `''` | Watermark image URL |
 | `watermarkTextColor` | `'#ffffff'` | Watermark text color |
 | `watermarkTransparency` | `0` | 0–100 (0 = opaque) |
 | `watermarkSize` | `150` | px (font size for text, width for images) |
 | `watermarkPosition` | `'right-top'` | `left-top` \| `right-top` \| `left-bottom` \| `right-bottom` \| `center` |
+
+## Lottie play-button animation
+
+Set `lottieFileUrl` to a Lottie `.json` and the overlay swaps the CSS sound bars
+for the animation. `lottieColors` recolors layers in order.
+
+```js
+new VideoPreviewPlayer({
+  target: '#player',
+  videoId: 'aqz-KE-bpKQ',
+  lottieFileUrl: 'lottie/play-button.json',
+  lottieColors: ['#2dd4bf', '#ffffff'], // ring + play triangle
+  lottieSize: 130,
+});
+```
+
+The bundled `lottie/play-button.json` is the animation used by the original
+product's public demo embed (a ring that draws itself + a play triangle),
+included here for reference. If you distribute your own build, swap in a
+properly licensed animation — the [LottieFiles free library](https://lottiefiles.com/search?q=play+button)
+has plenty under their free commercial license. (`lottie-web` itself is MIT.)
 
 ## Adding providers (Vimeo / MP4 / Twitch…)
 

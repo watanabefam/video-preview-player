@@ -58,6 +58,11 @@
              data-unmute-text="Autoplaying…"
              data-unmute-secondary="Tap for sound"></div>
       </div>
+
+      <div class="card">
+        <h2>4 · Lottie play-button <code>(lottieFileUrl, lottieColors)</code></h2>
+        <div id="player-d"></div>
+      </div>
     </div>
 
     <a class="btn" href="https://github.com/watanabefam/video-preview-player">Back to the repo →</a>
@@ -98,6 +103,23 @@
       watermarkTextColor: '#ffffff',
       watermarkPosition: 'right-top',
       watermarkTransparency: 0,
+    });
+
+    // Player 3 — auto-init markup (see the <div class="vpp" ...> above)
+
+    // Player 4 — Lottie play-button animation, recolored
+    new VideoPreviewPlayer({
+      target: '#player-d',
+      provider: 'youtube',
+      videoId: 'aqz-KE-bpKQ',
+      autoPlay: true,
+      loop: true,
+      muted: true,
+      watermarkTextContent: 'LOTTIE',
+      watermarkPosition: 'left-bottom',
+      lottieFileUrl: 'lottie/play-button.json',
+      lottieColors: ['#2dd4bf', '#ffffff'],
+      lottieSize: 130,
     });
   </script>
 </body>
