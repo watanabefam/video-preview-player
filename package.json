@@ -1,0 +1,29 @@
+{
+  "name": "video-preview-player",
+  "version": "0.1.0",
+  "description": "A muted, autoplay, custom-skinned video preview player. Ships with a YouTube provider; built on a provider-agnostic core so Vimeo / hosted MP4 / Twitch can be added.",
+  "keywords": [
+    "youtube",
+    "video",
+    "player",
+    "preview",
+    "muted",
+    "autoplay",
+    "click-for-sound",
+    "watermark",
+    "embed"
+  ],
+  "license": "MIT",
+  "main": "src/video-preview-player.js",
+  "style": "src/video-preview-player.css",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "demo": "npx --yes serve . -l 8000",
+    "check": "node --check src/video-preview-player.js"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}

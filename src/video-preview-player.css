@@ -1,0 +1,188 @@
+/* video-preview-player — skin styles (zero dependencies) */
+
+.vpp-root {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  overflow: hidden;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The slot is where the provider injects its media (e.g. the YT iframe) */
+.vpp-slot {
+  position: absolute;
+  inset: 0;
+}
+.vpp-slot iframe,
+.vpp-slot video {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* ---------------------------------------------------------------
+ * Click-for-sound overlay
+ * ---------------------------------------------------------------- */
+.vpp-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.35s ease;
+}
+.vpp-overlay--tinted {
+  background: var(--vpp-overlay-tint, rgba(0, 0, 0, 0.75));
+}
+.vpp-overlay--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.vpp-overlay-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  text-align: center;
+  padding: 0 24px;
+}
+
+.vpp-text-primary {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+.vpp-text-secondary {
+  font-size: 1rem;
+  font-weight: 500;
+  opacity: 0.9;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Pulsing sound-wave bars (CSS-only stand-in for a Lottie animation) */
+.vpp-sound-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 34px;
+}
+.vpp-sound-bars--big {
+  display: none;
+}
+.vpp-sound-bars i {
+  display: block;
+  width: 6px;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--vpp-play-button, #3f72af);
+  animation: vpp-pulse 1s ease-in-out infinite;
+  transform-origin: bottom;
+}
+.vpp-sound-bars i:nth-child(2) { animation-delay: 0.15s; }
+.vpp-sound-bars i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes vpp-pulse {
+  0%, 100% { transform: scaleY(0.25); }
+  50% { transform: scaleY(1); }
+}
+
+/* ---------------------------------------------------------------
+ * Bottom control bar
+ * ---------------------------------------------------------------- */
+.vpp-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.55));
+  color: #fff;
+}
+
+.vpp-play-toggle {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--vpp-play-button, #3f72af);
+  color: #fff;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.vpp-play-toggle:hover { filter: brightness(1.15); }
+
+.vpp-ico-play { display: block; }
+.vpp-ico-pause { display: none; }
+.vpp-is-playing .vpp-ico-play { display: none; }
+.vpp-is-playing .vpp-ico-pause { display: block; }
+
+.vpp-progress {
+  flex: 1 1 auto;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--vpp-progress-total, rgba(255, 255, 255, 0.65));
+  cursor: pointer;
+  position: relative;
+}
+.vpp-progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 3px;
+  background: var(--vpp-progress, #112d4e);
+}
+
+.vpp-time {
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.95;
+}
+
+/* ---------------------------------------------------------------
+ * Watermark
+ * ---------------------------------------------------------------- */
+.vpp-watermark {
+  position: absolute;
+  z-index: 4;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+.vpp-watermark img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.vpp-watermark--left-top    { top: 16px; left: 16px; }
+.vpp-watermark--right-top   { top: 16px; right: 16px; }
+.vpp-watermark--left-bottom { bottom: 16px; left: 16px; }
+.vpp-watermark--right-bottom{ bottom: 16px; right: 16px; }
+.vpp-watermark--center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* ---------------------------------------------------------------
+ * Misc
+ * ---------------------------------------------------------------- */
+.vpp-hidden { display: none !important; }

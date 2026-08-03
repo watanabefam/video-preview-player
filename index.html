@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>video-preview-player — live demo</title>
+  <link rel="stylesheet" href="src/video-preview-player.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 40px 20px 80px;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 1.6rem; margin-bottom: 4px; }
+    p.sub { color: #94a3b8; margin-top: 0; }
+    .grid { display: grid; gap: 32px; }
+    .card { background: #1e293b; border-radius: 12px; padding: 16px; }
+    .card h2 { font-size: 1rem; margin: 0 0 12px; color: #cbd5e1; font-weight: 600; }
+    .card h2 code { color: #7dd3fc; font-weight: 500; }
+    .btn {
+      display: inline-block; margin-top: 12px; padding: 8px 14px; border-radius: 8px;
+      background: #334155; color: #e2e8f0; text-decoration: none; font-size: 0.9rem;
+    }
+    .btn:hover { background: #475569; }
+    footer { margin-top: 48px; color: #64748b; font-size: 0.85rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>video-preview-player <span style="color:#64748b;font-weight:400">· live demo</span></h1>
+    <p class="sub">
+      Muted, autoplay, custom-skinned preview players. YouTube provider built in —
+      hover the player and click <em>"Click For Sound"</em> to unmute.
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <h2>1 · Default skin <code>(new VideoPreviewPlayer)</code></h2>
+        <div id="player-a"></div>
+      </div>
+
+      <div class="card">
+        <h2>2 · Custom colors + text watermark <code>(watermarkTextContent, colors)</code></h2>
+        <div id="player-b"></div>
+      </div>
+
+      <div class="card">
+        <h2>3 · Auto-init markup <code>(&lt;div class="vpp" data-...&gt;)</code></h2>
+        <div class="vpp"
+             data-video-id="eRsGyueVLvQ"
+             data-provider="youtube"
+             data-muted="1"
+             data-watermark="Just A Demo"
+             data-watermark-position="left-bottom"
+             data-unmute-text="Autoplaying…"
+             data-unmute-secondary="Tap for sound"></div>
+      </div>
+    </div>
+
+    <a class="btn" href="https://github.com/watanabefam/video-preview-player">Back to the repo →</a>
+
+    <footer>
+      demo videos: Big Buck Bunny &amp; Sintel (Blender Foundation, CC-BY) — open licensed
+    </footer>
+  </div>
+
+  <script src="src/video-preview-player.js"></script>
+  <script>
+    // Player 1 — defaults, Big Buck Bunny (open licensed demo video)
+    new VideoPreviewPlayer({
+      target: '#player-a',
+      provider: 'youtube',
+      videoId: 'aqz-KE-bpKQ',
+      autoPlay: true,
+      loop: true,
+      muted: true,
+      watermarkTextContent: 'PREVIEW',
+      watermarkPosition: 'right-top',
+      watermarkTransparency: 20,
+    });
+
+    // Player 2 — custom skin colors + text watermark
+    new VideoPreviewPlayer({
+      target: '#player-b',
+      provider: 'youtube',
+      videoId: 'aqz-KE-bpKQ',
+      autoPlay: true,
+      loop: true,
+      muted: true,
+      colorBars: '#2dd4bf',
+      colorPlayButton: '#0d9488',
+      colorProgressBar: '#134e4a',
+      colorProgressBarTotal: 'rgba(255,255,255,0.35)',
+      watermarkTextContent: 'Adoration for Children',
+      watermarkTextColor: '#ffffff',
+      watermarkPosition: 'right-top',
+      watermarkTransparency: 0,
+    });
+  </script>
+</body>
+</html>
