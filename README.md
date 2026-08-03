@@ -111,11 +111,13 @@ new VideoPreviewPlayer({
 });
 ```
 
-The bundled `lottie/play-button.json` is the animation used by the original
-product's public demo embed (a ring that draws itself + a play triangle),
-included here for reference. If you distribute your own build, swap in a
-properly licensed animation — the [LottieFiles free library](https://lottiefiles.com/search?q=play+button)
-has plenty under their free commercial license. (`lottie-web` itself is MIT.)
+The bundled `lottie/play-button.json` is **authored in this repository** (MIT):
+a ring that scales in, a play triangle that pops in, then a gentle fade-out —
+looping on a 3s cycle. It has two layers, so `lottieColors: ['#3f72af', '#112d4e']`
+colors ring + triangle. Prefer a different look? Drop in any animation from
+the [LottieFiles free library](https://lottiefiles.com/search?q=play+button)
+(free for commercial use) — `lottieFileUrl` accepts any Lottie JSON.
+(`lottie-web` itself is MIT.)
 
 ## Adding providers (Vimeo / MP4 / Twitch…)
 
