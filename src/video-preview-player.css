@@ -44,14 +44,57 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: opacity 0.35s ease;
-}
-.vpp-overlay--tinted {
-  background: var(--vpp-overlay-tint, rgba(0, 0, 0, 0.75));
+  transition: opacity 0.35s ease, transform 0.35s ease, filter 0.35s ease;
 }
 .vpp-overlay--hidden {
   opacity: 0;
   pointer-events: none;
+}
+/* Pre-click backdrop scrim — gives the play button contrast on any background */
+.vpp-backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--vpp-backdrop, #000);
+  opacity: var(--vpp-backdrop-opacity, 0.4);
+}
+.vpp-overlay-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* Dismiss transitions (chosen via `backdropTransition`) */
+.vpp-root[data-transition="zoom"] .vpp-overlay--hidden {
+  transform: scale(1.12);
+}
+.vpp-root[data-transition="slide-up"] .vpp-overlay--hidden {
+  transform: translateY(-100%);
+}
+.vpp-root[data-transition="blur"] .vpp-overlay--hidden {
+  filter: blur(18px);
+}
+
+/* Material-style ripple dismissal */
+.vpp-ripple {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  margin-left: -50px;
+  margin-top: -50px;
+  border-radius: 50%;
+  background: var(--vpp-backdrop, #000);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+  transform: scale(0);
+  will-change: transform, opacity;
+}
+.vpp-ripple--active {
+  animation: vpp-ripple 0.6s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+@keyframes vpp-ripple {
+  0%   { transform: scale(0); opacity: 0.85; }
+  65%  { transform: scale(var(--vpp-ripple-scale, 25)); opacity: 0.85; }
+  100% { transform: scale(var(--vpp-ripple-scale, 25)); opacity: 0; }
 }
 
 .vpp-overlay-inner {

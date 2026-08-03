@@ -213,6 +213,14 @@
     return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, 1];
   }
 
+  // Pre-click backdrop color: named presets or a raw CSS color.
+  function resolveBackdrop(mode) {
+    if (mode === 'dark') return '#000000';
+    if (mode === 'light') return '#ffffff';
+    if (mode === 'none') return 'transparent';
+    return mode || '#000000';
+  }
+
   /* ==============================================================
    * Core player
    * ============================================================== */
@@ -237,7 +245,11 @@
     colorPlayButton: '#3f72af',
     colorProgressBarTotal: 'rgba(255,255,255,0.65)',
     colorProgressBar: '#112d4e',
-    colorOverlayText: 'rgba(0,0,0,0.75)',
+
+    // Pre-click backdrop & dismiss transition
+    backdrop: 'dark',             // 'dark' | 'light' | 'none' | any CSS color — scrim behind the play button
+    backdropOpacity: 0.4,         // 0-1 scrim strength
+    backdropTransition: 'fade',   // 'fade' | 'ripple' | 'zoom' | 'slide-up' | 'blur'
 
     // Behavior
     controlsHideDelay: 2500,      // ms of inactivity before the bar auto-hides (while playing)
@@ -302,7 +314,9 @@
     root.style.setProperty('--vpp-play-button', o.colorPlayButton);
     root.style.setProperty('--vpp-progress-total', o.colorProgressBarTotal);
     root.style.setProperty('--vpp-progress', o.colorProgressBar);
-    root.style.setProperty('--vpp-overlay-tint', o.colorOverlayText);
+    root.setAttribute('data-transition', o.backdropTransition);
+    root.style.setProperty('--vpp-backdrop', resolveBackdrop(o.backdrop));
+    root.style.setProperty('--vpp-backdrop-opacity', String(o.backdropOpacity));
 
     var slot = document.createElement('div');
     slot.className = 'vpp-slot';
@@ -310,6 +324,7 @@
     var overlay = document.createElement('div');
     overlay.className = 'vpp-overlay';
     overlay.innerHTML =
+      '<div class="vpp-backdrop"></div>' +
       '<div class="vpp-overlay-inner">' +
       '  <div class="vpp-lottie"></div>' +
       '  <span class="vpp-sound-bars" aria-hidden="true"><i></i><i></i><i></i></span>' +
@@ -381,9 +396,9 @@
     var self = this;
 
     // Overlay: clicking the video always replays from the start, with sound.
-    this.overlay.addEventListener('click', function () {
+    this.overlay.addEventListener('click', function (e) {
       self._interacted = true; // first click unlocks the HUD
-      self._playFromStart();
+      self._playFromStart(e);
     });
 
     // Play / pause toggle on the bottom bar
@@ -479,21 +494,46 @@
     });
   };
 
-  VideoPreviewPlayer.prototype._unmute = function () {
+  VideoPreviewPlayer.prototype._unmute = function (e) {
     this._unmuted = true;
     this._provider.unmute();
     if (!this._provider.isPlaying()) this._provider.play();
-    this._renderState();
-    // Fade the overlay away once there is sound.
     var self = this;
-    setTimeout(function () { self._renderState(); }, 1200);
+    if (this.options.backdropTransition === 'ripple' && !this.overlay.classList.contains('vpp-overlay--hidden')) {
+      // Material-style ripple from the click point, then fade the overlay.
+      this._rippleOut(e);
+      setTimeout(function () { self.overlay.classList.add('vpp-overlay--hidden'); }, 240);
+      setTimeout(function () { self._renderState(); }, 300);
+    } else {
+      this._renderState();
+      // Re-render once the transition has completed to keep state in sync.
+      setTimeout(function () { self._renderState(); }, 400);
+    }
   };
 
   // Play is always "start from the beginning, with sound" in this player.
-  VideoPreviewPlayer.prototype._playFromStart = function () {
+  VideoPreviewPlayer.prototype._playFromStart = function (e) {
     this._ended = false;
     this._provider.seekTo(0);
-    this._unmute();
+    this._unmute(e);
+  };
+
+  // Material-style ripple: a circle expands from the click point and fades.
+  VideoPreviewPlayer.prototype._rippleOut = function (e) {
+    var rect = this.root.getBoundingClientRect();
+    var x = e && e.clientX ? e.clientX - rect.left : rect.width / 2;
+    var y = e && e.clientY ? e.clientY - rect.top : rect.height / 2;
+    var scale = (Math.max(rect.width, rect.height) * 2.2) / 100;
+    var r = document.createElement('div');
+    r.className = 'vpp-ripple';
+    r.style.left = x + 'px';
+    r.style.top = y + 'px';
+    r.style.setProperty('--vpp-ripple-scale', scale.toFixed(2));
+    this.root.appendChild(r);
+    void r.offsetWidth; // force reflow so the animation starts from scale(0)
+    r.classList.add('vpp-ripple--active');
+    var self = this;
+    setTimeout(function () { if (r.parentNode) r.parentNode.removeChild(r); }, 700);
   };
 
   /* ----- state / skin rendering ----- */
@@ -508,26 +548,18 @@
     // Mute icon + volume slider
     this._renderVolume();
 
-    // Overlay visibility
+    // Overlay visibility (the backdrop scrim is part of the overlay)
     if (!playing) {
-      this.overlay.classList.add('vpp-overlay--tinted');
-      if (this._ended) {
-        this.textPrimary.textContent = this.options.textEnded;
-        this.textSecondary.textContent = '';
-        this.soundBars.classList.add('vpp-hidden');
-      } else {
-        this.textPrimary.textContent = this.options.textPaused;
-        this.textSecondary.textContent = '';
-        this.soundBars.classList.add('vpp-hidden');
-      }
+      this.textPrimary.textContent = this._ended ? this.options.textEnded : this.options.textPaused;
+      this.textSecondary.textContent = '';
+      this.soundBars.classList.add('vpp-hidden');
+      this.overlay.classList.remove('vpp-overlay--hidden');
     } else if (muted && !this._unmuted) {
-      this.overlay.classList.remove('vpp-overlay--tinted');
       this.textPrimary.textContent = this.options.unmuteText;
       this.textSecondary.textContent = this.options.unmuteTextSecondary;
       this.soundBars.classList.remove('vpp-hidden');
       this.overlay.classList.remove('vpp-overlay--hidden');
     } else {
-      this.overlay.classList.remove('vpp-overlay--tinted');
       this.overlay.classList.add('vpp-overlay--hidden');
     }
   };
@@ -666,6 +698,8 @@
         loop: attrBool(el, 'data-loop', true),
         muted: attrBool(el, 'data-muted', true),
         privacyMode: attrBool(el, 'data-privacy-mode', true),
+        backdrop: el.getAttribute('data-backdrop') || undefined,
+        backdropTransition: el.getAttribute('data-backdrop-transition') || undefined,
         watermarkTextContent: el.getAttribute('data-watermark') || undefined,
         watermarkPosition: el.getAttribute('data-watermark-position') || undefined,
         unmuteText: el.getAttribute('data-unmute-text') || undefined,

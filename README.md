@@ -13,6 +13,7 @@ hosted MP4s, Twitch, etc. can be added by implementing one small interface.
 - ✅ Zero dependencies, ~300 lines, MIT licensed
 - ✅ Muted autoplay + loop (YouTube's own IFrame API underneath)
 - ✅ **Bare until first click** — just the play animation; no HUD or overlay text until you click
+- ✅ Configurable pre-click backdrop (dark/light/custom) + dismiss transitions (`fade`, `ripple`, `zoom`, `slide-up`, `blur`)
 - ✅ Clicking **play** always restarts the video from the beginning, with sound
 - ✅ Custom play/pause, progress bar (click + drag to seek), time readout
 - ✅ Control bar auto-hides after a few seconds of inactivity while playing
@@ -81,7 +82,9 @@ hosted MP4s, Twitch, etc. can be added by implementing one small interface.
 | `colorPlayButton` | `'#3f72af'` | Play/pause button color |
 | `colorProgressBarTotal` | `rgba(255,255,255,0.65)` | Progress track |
 | `colorProgressBar` | `'#112d4e'` | Progress fill |
-| `colorOverlayText` | `rgba(0,0,0,0.75)` | Paused/ended overlay tint |
+| `backdrop` | `'dark'` | Pre-click scrim behind the play button: `'dark'` \| `'light'` \| `'none'` \| any CSS color |
+| `backdropOpacity` | `0.4` | Scrim strength (0–1) |
+| `backdropTransition` | `'fade'` | Dismiss effect on click: `'fade'` \| `'ripple'` \| `'zoom'` \| `'slide-up'` \| `'blur'` |
 | `controlsHideDelay` | `2500` | ms of inactivity before the control bar auto-hides (while playing); `0` disables |
 | `lottieFileUrl` | bundled animation (jsDelivr) | URL/path to a Lottie `.json` play-button animation (lottie-web loads on demand from CDN; set `''` to use the CSS bars) |
 | `lottieLoop` / `lottieAutoplay` | `true` / `true` | Lottie playback |
@@ -130,6 +133,30 @@ new VideoPreviewPlayer({
 > animation. Source: <https://lottiefiles.com/free-animation/click-to-video-play-button-hSNkC9gdMb>
 > · Author: MD Abdur Rahim (<https://www.lottieicon.com/>).
 > (`lottie-web` itself is MIT.)
+
+## Backdrop & dismiss transitions
+
+Before the first click the player shows a scrim behind the play button so it
+reads on any background (`backdrop` + `backdropOpacity`). Clicking dismisses
+it with one of five pure-CSS transitions (zero dependencies):
+
+| Transition | Effect |
+|---|---|
+| `fade` | overlay simply fades out (default) |
+| `ripple` | material-style circle expands from the click point |
+| `zoom` | overlay scales up while fading |
+| `slide-up` | overlay slides up and away |
+| `blur` | overlay blurs out |
+
+```js
+new VideoPreviewPlayer({
+  target: '#player',
+  videoId: 'aqz-KE-bpKQ',
+  backdrop: 'light',           // or 'dark' (default), 'none', '#112d4e', …
+  backdropOpacity: 0.5,
+  backdropTransition: 'ripple',
+});
+```
 
 ## Adding providers (Vimeo / MP4 / Twitch…)
 
