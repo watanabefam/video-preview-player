@@ -68,13 +68,31 @@ showcase cards.
      data-watermark-position="left-bottom"></div>
 ```
 
+### Hosted MP4 / WebM
+
+Same player, same skin, different backend — just a native `<video>` element:
+
+```js
+new VideoPreviewPlayer({
+  target: '#player',
+  provider: 'html5',
+  src: 'https://example.com/video.mp4',
+  autoPlay: true,
+  loop: true,
+  muted: true,
+  backdropTransition: 'ripple',
+});
+```
+
 ## Options
 
 | Option | Default | Description |
 |---|---|---|
 | `target` | — | CSS selector or element to mount into (required) |
-| `provider` | `'youtube'` | Video backend. See [Adding providers](#adding-providers) |
-| `videoId` | — | Video id for the provider (required) |
+| `provider` | `'youtube'` | Video backend: `'youtube'` \| `'html5'` (hosted MP4/WebM). See [Adding providers](#adding-providers) |
+| `videoId` | — | Video id (required for `youtube`) |
+| `src` | `null` | Media URL (required for `html5`) |
+| `poster` | `''` | Poster image URL (`html5`) |
 | `autoPlay` | `true` | Start playing on load |
 | `loop` | `true` | Loop the video |
 | `muted` | `true` | Start muted (browsers require this for autoplay) |
@@ -183,9 +201,9 @@ implementation (`YouTubeProvider`).
 ## Roadmap
 
 - [x] YouTube provider
+- [x] Hosted MP4 / WebM provider (`html5`)
 - [ ] Vimeo provider
-- [ ] Hosted MP4 / HLS provider
-- [ ] Twitch / other outlets
+- [ ] HLS / Twitch / other outlets
 - [ ] `play()`/`pause()` public API + `ended` event hooks
 - [ ] Volume control
 - [ ] React / Vue / WordPress wrapper

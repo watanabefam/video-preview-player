@@ -64,6 +64,12 @@
       <div class="card">
         <h2>Live configurator — try every option</h2>
         <div class="cfg-grid">
+          <label>Source
+            <select id="cfg-source">
+              <option value="youtube" selected>YouTube</option>
+              <option value="mp4">Hosted MP4</option>
+            </select>
+          </label>
           <label>Backdrop
             <select id="cfg-backdrop">
               <option value="dark" selected>dark</option>
@@ -161,6 +167,11 @@
         <h2>4 · Lottie play-button + ripple dismiss <code>(backdropTransition)</code></h2>
         <div id="player-d"></div>
       </div>
+
+      <div class="card">
+        <h2>5 · Hosted MP4 <code>(provider: 'html5')</code></h2>
+        <div id="player-e"></div>
+      </div>
     </div>
 
     <a class="btn" href="https://github.com/watanabefam/video-preview-player">Back to the repo →</a>
@@ -223,9 +234,24 @@
       backdropTransition: 'ripple',
     });
 
+    // Player 5 — hosted MP4 (html5 provider)
+    new VideoPreviewPlayer({
+      target: '#player-e',
+      provider: 'html5',
+      src: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+      autoPlay: true,
+      loop: true,
+      muted: true,
+      watermarkTextContent: 'MP4',
+      watermarkPosition: 'right-bottom',
+      backdropTransition: 'fade',
+    });
+
     // ----- Live configurator: rebuild the player when any option changes -----
     (function () {
+      var MP4_SRC = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
       var cfg = {
+        source: 'youtube',
         videoId: 'aqz-KE-bpKQ',
         provider: 'youtube',
         autoPlay: true,
@@ -246,10 +272,12 @@
       function build() {
         if (player) { player.destroy(); player = null; }
         document.getElementById('player-config').innerHTML = '';
+        var isMp4 = cfg.source === 'mp4';
         player = new VideoPreviewPlayer({
           target: '#player-config',
-          provider: cfg.provider,
-          videoId: cfg.videoId,
+          provider: isMp4 ? 'html5' : 'youtube',
+          src: isMp4 ? MP4_SRC : undefined,
+          videoId: isMp4 ? undefined : cfg.videoId,
           autoPlay: cfg.autoPlay,
           loop: cfg.loop,
           muted: cfg.muted,
@@ -274,6 +302,7 @@
         });
       }
 
+      bind('cfg-source', 'source');
       bind('cfg-backdrop', 'backdrop');
       bind('cfg-opacity', 'backdropOpacity');
       bind('cfg-transition', 'backdropTransition');

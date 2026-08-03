@@ -4,9 +4,9 @@
  * A muted, autoplay, custom-skinned video preview player.
  *
  * Provider-agnostic core: a "provider" abstracts a video backend.
- * YouTube ships built-in. Vimeo, hosted MP4, Twitch, etc. can be
- * added by implementing the same tiny interface (see the Provider
- * section below) and registering it:
+ * YouTube and hosted MP4/WebM (html5) ship built-in. Vimeo, Twitch,
+ * HLS, etc. can be added by implementing the same tiny interface
+ * (see the Provider section below) and registering it:
  *
  *     VideoPreviewPlayer.registerProvider('vimeo', VimeoProvider);
  *
@@ -191,6 +191,110 @@
   providers.youtube = YouTubeProvider;
 
   /* --------------------------------------------------------------
+   * HTML5 provider (hosted MP4 / WebM — a native <video> element)
+   * ------------------------------------------------------------ */
+  function HTML5Provider(slot, options) {
+    this.slot = slot;
+    this.options = options;
+    this._readyCbs = [];
+    this._stateCbs = [];
+    this._video = null;
+    this._destroyed = false;
+    this._readyFired = false;
+    this._load();
+  }
+
+  HTML5Provider.prototype._load = function () {
+    var self = this;
+    var o = this.options;
+    var v = document.createElement('video');
+    v.src = o.src || o.videoId;
+    v.muted = o.muted !== false;
+    v.loop = !!o.loop;
+    v.playsInline = true;
+    v.setAttribute('playsinline', '');
+    if (o.poster) v.poster = o.poster;
+    this.slot.appendChild(v);
+    this._video = v;
+
+    var fire = function (state) { self._stateCbs.forEach(function (cb) { cb(state); }); };
+    var fireReady = function () {
+      if (self._readyFired) return;
+      self._readyFired = true;
+      self._readyCbs.forEach(function (cb) { cb(); });
+      fire(PROVIDER_STATE.READY);
+    };
+
+    v.addEventListener('loadedmetadata', fireReady);
+    v.addEventListener('canplay', fireReady);
+    v.addEventListener('playing', function () { fire(PROVIDER_STATE.PLAYING); });
+    v.addEventListener('pause', function () { fire(PROVIDER_STATE.PAUSED); });
+    v.addEventListener('ended', function () { fire(PROVIDER_STATE.ENDED); });
+    v.addEventListener('waiting', function () { fire(PROVIDER_STATE.BUFFERING); });
+    v.addEventListener('stalled', function () { fire(PROVIDER_STATE.BUFFERING); });
+
+    // Muted autoplay is allowed without a user gesture.
+    if (o.autoPlay) {
+      var tryPlay = function () {
+        var p = v.play();
+        if (p && p.catch) p.catch(function () { /* blocked — wait for a gesture */ });
+      };
+      v.addEventListener('canplay', tryPlay);
+      tryPlay();
+    }
+  };
+
+  HTML5Provider.prototype.onReady = function (cb) { this._readyCbs.push(cb); };
+  HTML5Provider.prototype.onStateChange = function (cb) { this._stateCbs.push(cb); };
+  HTML5Provider.prototype.play = function () {
+    if (!this._video) return;
+    var p = this._video.play();
+    if (p && p.catch) p.catch(function () {});
+  };
+  HTML5Provider.prototype.pause = function () { if (this._video) this._video.pause(); };
+  HTML5Provider.prototype.mute = function () { if (this._video) this._video.muted = true; };
+  HTML5Provider.prototype.unmute = function () { if (this._video) this._video.muted = false; };
+  HTML5Provider.prototype.getVolume = function () {
+    return this._video ? Math.round((this._video.volume || 0) * 100) : 100;
+  };
+  HTML5Provider.prototype.setVolume = function (v) { if (this._video) this._video.volume = v / 100; };
+  HTML5Provider.prototype.seekTo = function (t) {
+    if (this._video && isFinite(t)) this._video.currentTime = t;
+  };
+  HTML5Provider.prototype.isMuted = function () {
+    return this._video ? this._video.muted : this.options.muted !== false;
+  };
+  HTML5Provider.prototype.isPlaying = function () {
+    var v = this._video;
+    return !!v && !v.paused && !v.ended;
+  };
+  HTML5Provider.prototype.getState = function () {
+    var v = this._video;
+    if (!v) return PROVIDER_STATE.BUFFERING;
+    if (v.ended) return PROVIDER_STATE.ENDED;
+    if (v.paused) return PROVIDER_STATE.PAUSED;
+    if (v.readyState < 3) return PROVIDER_STATE.BUFFERING;
+    return PROVIDER_STATE.PLAYING;
+  };
+  HTML5Provider.prototype.getCurrentTime = function () { return this._video ? this._video.currentTime || 0 : 0; };
+  HTML5Provider.prototype.getDuration = function () {
+    var d = this._video ? this._video.duration : 0;
+    return isFinite(d) ? d : 0;
+  };
+  HTML5Provider.prototype.destroy = function () {
+    this._destroyed = true;
+    if (this._video) {
+      this._video.pause();
+      this._video.removeAttribute('src');
+      this._video.load(); // release the stream
+      if (this._video.parentNode) this._video.parentNode.removeChild(this._video);
+    }
+    this._video = null;
+  };
+
+  providers.html5 = HTML5Provider;
+
+  /* --------------------------------------------------------------
    * Lottie play-button animation (optional, no hard dependency)
    * ------------------------------------------------------------ */
   var lottiePromise = null;
@@ -248,8 +352,10 @@
    * ============================================================== */
 
   var DEFAULTS = {
-    provider: 'youtube',
+    provider: 'youtube',          // 'youtube' | 'html5' (hosted MP4/WebM)
     videoId: null,
+    src: null,                    // media URL (html5 provider)
+    poster: '',                   // poster image (html5 provider)
     autoPlay: true,
     loop: true,
     muted: true,
@@ -294,8 +400,8 @@
   };
 
   function VideoPreviewPlayer(options) {
-    if (!options || !options.videoId) {
-      throw new Error('VideoPreviewPlayer: options.videoId is required.');
+    if (!options || (!options.videoId && !options.src)) {
+      throw new Error('VideoPreviewPlayer: options.videoId (or options.src for the html5 provider) is required.');
     }
     this.options = merge(DEFAULTS, options);
     this.target = resolveTarget(options.target);

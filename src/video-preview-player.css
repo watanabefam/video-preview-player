@@ -32,6 +32,10 @@
   border: 0;
   display: block;
 }
+.vpp-slot video {
+  object-fit: cover; /* fill the 16:9 frame like an iframe would */
+  background: #000;
+}
 
 /* ---------------------------------------------------------------
  * Click-for-sound overlay
