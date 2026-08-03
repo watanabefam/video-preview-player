@@ -19,7 +19,7 @@ hosted MP4s, Twitch, etc. can be added by implementing one small interface.
 - ✅ Control bar auto-hides after a few seconds of inactivity while playing
 - ✅ Mute toggle + volume slider
 - ✅ Lottie play-button animation out of the box (`lottieFileUrl` + layer recolor; CSS bars as fallback)
-- ✅ Text or image watermark, configurable position / size / transparency
+- ✅ Text or image watermark, configurable position / size / transparency / timing (`'before'`, `'after'`, `'always'`)
 - ✅ Fully themable colors
 - ✅ Privacy mode: uses `youtube-nocookie.com` by default
 - 🚫 Not an ad-blocker — this wraps the official embed API. YouTube can still
@@ -96,6 +96,7 @@ hosted MP4s, Twitch, etc. can be added by implementing one small interface.
 | `watermarkTransparency` | `0` | 0–100 (0 = opaque) |
 | `watermarkSize` | `150` | px (font size for text, width for images) |
 | `watermarkPosition` | `'right-top'` | `left-top` \| `right-top` \| `left-bottom` \| `right-bottom` \| `center` |
+| `watermarkTiming` | `'always'` | When the watermark shows: `'always'` \| `'before'` (only before the first click) \| `'after'` (only after the first click) |
 
 ## Lottie play-button animation
 

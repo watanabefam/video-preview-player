@@ -286,6 +286,7 @@
     watermarkTransparency: 0,     // 0-100
     watermarkSize: 150,
     watermarkPosition: 'right-top', // left-top | right-top | left-bottom | right-bottom | center
+    watermarkTiming: 'always',    // 'always' | 'before' (pre-click) | 'after' (post-click)
   };
 
   function VideoPreviewPlayer(options) {
@@ -311,6 +312,7 @@
     this._volumeDragging = false;
     this._lottieAnim = null;
     this._initDom();
+    this._syncWatermark();
     this._provider = new Klass(this.slot, this.options);
     this._wireProvider();
     this._startTicker();
@@ -406,6 +408,7 @@
     this.timeEl = controls.querySelector('.vpp-time');
     this.muteToggle = controls.querySelector('.vpp-mute-toggle');
     this.volumeSlider = controls.querySelector('.vpp-volume-slider');
+    this.watermark = watermark;
 
     this._bindEvents();
   };
@@ -580,6 +583,18 @@
     } else {
       this.overlay.classList.add('vpp-overlay--hidden');
     }
+
+    // Watermark visibility per timing option
+    this._syncWatermark();
+  };
+
+  VideoPreviewPlayer.prototype._syncWatermark = function () {
+    if (!this.watermark) return;
+    var t = this.options.watermarkTiming;
+    var show = t === 'always' ||
+               (t === 'before' && !this._interacted) ||
+               (t === 'after' && this._interacted);
+    this.watermark.classList.toggle('vpp-hidden', !show);
   };
 
   VideoPreviewPlayer.prototype._renderProgress = function (frac) {
@@ -726,6 +741,7 @@
         backdropTransition: el.getAttribute('data-backdrop-transition') || undefined,
         watermarkTextContent: el.getAttribute('data-watermark') || undefined,
         watermarkPosition: el.getAttribute('data-watermark-position') || undefined,
+        watermarkTiming: el.getAttribute('data-watermark-timing') || undefined,
         unmuteText: el.getAttribute('data-unmute-text') || undefined,
         unmuteTextSecondary: el.getAttribute('data-unmute-secondary') || undefined,
       };
