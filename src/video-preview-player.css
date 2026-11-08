@@ -313,3 +313,47 @@
  * Misc
  * ---------------------------------------------------------------- */
 .vpp-hidden { display: none !important; }
+
+/* ---------------------------------------------------------------
+   Hit layer + fullscreen
+   The provider's iframe covers the player and swallows pointer events,
+   so a transparent layer sits between the media and the overlay to catch
+   single-click (play/pause) and double-click (fullscreen).
+   --------------------------------------------------------------- */
+.vpp-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: transparent;
+  cursor: pointer;
+}
+
+.vpp-fs-toggle {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  opacity: 0.9;
+}
+.vpp-fs-toggle:hover { background: rgba(255, 255, 255, 0.15); opacity: 1; }
+
+.vpp-ico-fs-enter { display: block; }
+.vpp-ico-fs-exit { display: none; }
+.vpp-is-fullscreen .vpp-ico-fs-enter { display: none; }
+.vpp-is-fullscreen .vpp-ico-fs-exit { display: block; }
+
+.vpp-root:fullscreen,
+.vpp-root:-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+  aspect-ratio: auto;
+  border-radius: 0;
+  background: #000;
+}

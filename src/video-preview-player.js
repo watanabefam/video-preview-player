@@ -105,6 +105,7 @@
 
   function YouTubeProvider(slot, options) {
     this.slot = slot;
+    this.hit = hit;
     this.options = options;
     this._readyCbs = [];
     this._stateCbs = [];
@@ -195,6 +196,7 @@
    * ------------------------------------------------------------ */
   function HTML5Provider(slot, options) {
     this.slot = slot;
+    this.hit = hit;
     this.options = options;
     this._readyCbs = [];
     this._stateCbs = [];
@@ -469,6 +471,10 @@
     var controls = document.createElement('div');
     controls.className = 'vpp-controls';
     controls.innerHTML =
+      '<button type="button" class="vpp-fs-toggle" aria-label="Fullscreen" title="Fullscreen">' +
+      '  <svg class="vpp-ico vpp-ico-fs-enter" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>' +
+      '  <svg class="vpp-ico vpp-ico-fs-exit" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>' +
+      '</button>' +
       '<button type="button" class="vpp-play-toggle" aria-label="Play / Pause">' +
       '  <svg class="vpp-ico vpp-ico-play" viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>' +
       '  <svg class="vpp-ico vpp-ico-pause" viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>' +
@@ -500,7 +506,14 @@
       watermark.style.color = o.watermarkTextColor;
     }
 
+    // Transparent layer above the provider's iframe: the iframe swallows pointer events, so
+    // without this neither double-click nor click-to-pause reaches the player after the overlay goes.
+    var hit = document.createElement('div');
+    hit.className = 'vpp-hit';
+    hit.setAttribute('aria-hidden', 'true');
+
     root.appendChild(slot);
+    root.appendChild(hit);
     root.appendChild(overlay);
     root.appendChild(controls);
     if (o.watermarkTextContent || o.watermarkImageUrl) root.appendChild(watermark);
@@ -508,6 +521,7 @@
 
     this.root = root;
     this.slot = slot;
+    this.hit = hit;
     this.overlay = overlay;
     this.overlayInner = overlay.querySelector('.vpp-overlay-inner');
     this.textPrimary = overlay.querySelector('.vpp-text-primary');
@@ -521,6 +535,7 @@
     this.timeEl = controls.querySelector('.vpp-time');
     this.muteToggle = controls.querySelector('.vpp-mute-toggle');
     this.volumeSlider = controls.querySelector('.vpp-volume-slider');
+    this.fsToggle = controls.querySelector('.vpp-fs-toggle');
     this.watermark = watermark;
 
     this._bindEvents();
@@ -539,9 +554,34 @@
     this.playToggle.addEventListener('click', function (e) {
       e.stopPropagation();
       self._interacted = true;
-      if (self._provider.isPlaying()) self._provider.pause();
-      else self._playFromStart();
+      self._togglePlay();
     });
+
+    // Fullscreen: button (bottom-left) and double-click anywhere on the video.
+    if (this.fsToggle) {
+      this.fsToggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        self._interacted = true;
+        self._toggleFullscreen();
+      });
+    }
+    this.root.addEventListener('dblclick', function (e) {
+      e.preventDefault();
+      self._toggleFullscreen();
+    });
+    this.hit.addEventListener('dblclick', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      self._toggleFullscreen();
+    });
+    this.hit.addEventListener('click', function (e) {
+      // single click on the video (after the intro overlay is gone) toggles playback
+      if (!self._interacted) return;
+      e.stopPropagation();
+      self._togglePlay();
+    });
+    document.addEventListener('fullscreenchange', function () { self._renderFullscreen(); });
+    document.addEventListener('webkitfullscreenchange', function () { self._renderFullscreen(); });
 
     // Seek on the progress bar (click + drag)
     var seeking = false;
@@ -631,6 +671,7 @@
 
   VideoPreviewPlayer.prototype._unmute = function (e) {
     this._unmuted = true;
+    this._started = true;
     this._provider.unmute();
     if (!this._provider.isPlaying()) this._provider.play();
     var self = this;
@@ -644,6 +685,53 @@
       // Re-render once the transition has completed to keep state in sync.
       setTimeout(function () { self._renderState(); }, 400);
     }
+  };
+
+  // Pause resumes where it left off; only the very first play (and a replay after the
+  // end) starts from zero.
+  VideoPreviewPlayer.prototype._togglePlay = function () {
+    if (this._provider.isPlaying()) {
+      this._provider.pause();
+      return;
+    }
+    if (this._ended) {
+      this._playFromStart();
+      return;
+    }
+    if (this._started) {
+      this._beginPlayStart();
+      this._provider.play();
+      if (this._unmuted && this._provider.isMuted && this._provider.isMuted()) this._provider.unmute();
+      this._renderState();
+      return;
+    }
+    this._playFromStart();
+  };
+
+  VideoPreviewPlayer.prototype._toggleFullscreen = function () {
+    var doc = document;
+    var el = this.root;
+    var fsEl = doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement;
+    if (fsEl) {
+      (doc.exitFullscreen || doc.webkitExitFullscreen || doc.msExitFullscreen).call(doc);
+      return;
+    }
+    var req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (req) {
+      var p = req.call(el);
+      if (p && p.catch) p.catch(function () {});
+      return;
+    }
+    // iOS has no element fullscreen: fall back to the video element the provider injected.
+    var v = el.querySelector('video');
+    if (v && v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+  };
+
+  VideoPreviewPlayer.prototype._renderFullscreen = function () {
+    var doc = document;
+    var on = !!(doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement);
+    this.root.classList.toggle('vpp-is-fullscreen', on);
+    if (this.fsToggle) this.fsToggle.setAttribute('aria-label', on ? 'Exit fullscreen' : 'Fullscreen');
   };
 
   // Play is always "start from the beginning, with sound" in this player.

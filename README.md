@@ -211,3 +211,15 @@ implementation (`YouTubeProvider`).
 ## License
 
 MIT © ThePopularizer
+
+## Changelog
+
+### 0.2.0
+- **Pause now resumes.** Play/pause used to always call `seekTo(0)`; it now resumes from the
+  current position and only restarts on the very first play or after the video ends.
+- **Fullscreen** button in the control bar (bottom-left) plus **double-click** on the player.
+  A transparent `.vpp-hit` layer sits above the provider iframe — without it the iframe swallows
+  the pointer events and neither double-click nor click-to-pause can reach the player.
+- `vpp-is-fullscreen` class + `<root>:fullscreen` styling; iOS falls back to `webkitEnterFullscreen`.
+
+## Changelog placeholder
