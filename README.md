@@ -222,4 +222,3 @@ MIT © ThePopularizer
   the pointer events and neither double-click nor click-to-pause can reach the player.
 - `vpp-is-fullscreen` class + `<root>:fullscreen` styling; iOS falls back to `webkitEnterFullscreen`.
 
-## Changelog placeholder
