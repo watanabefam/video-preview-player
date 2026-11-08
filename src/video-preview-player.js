@@ -692,29 +692,13 @@
   };
 
   VideoPreviewPlayer.prototype._onOverlayClick = function (e) {
-    // Never played: start from the beginning, with sound.
-    if (!this._started) {
+    // Until the visitor has taken sound, this overlay is the "click for sound" prompt: the first
+    // click always starts the video from the beginning. Once sound is on, the overlay becomes the
+    // paused/ended surface, and clicking it resumes (or replays after the end).
+    if (!this._unmuted) {
       this._playFromStart(e);
       return;
     }
-    // Playing but still silent: this is the "click for sound" overlay — keep the position.
-    if (this._provider.isPlaying()) {
-      if (!this._unmuted) {
-        this._unmuted = true;
-        this._provider.unmute();
-        if (this.options.backdropTransition === 'ripple' && !this.overlay.classList.contains('vpp-overlay--hidden')) {
-          this._rippleOut(e);
-          setTimeout(function () { this.overlay.classList.add('vpp-overlay--hidden'); }.bind(this), 240);
-        } else {
-          this.overlay.classList.add('vpp-overlay--hidden');
-        }
-        this._renderState();
-      } else {
-        this._provider.pause();
-      }
-      return;
-    }
-    // Paused mid-video (or ended -> replay): resume where it was.
     this._togglePlay();
   };
 
@@ -725,24 +709,23 @@
       this._provider.pause();
       return;
     }
+    // No sound yet: this play is the first interaction, so start from the top with audio.
+    if (!this._unmuted) {
+      this._playFromStart();
+      return;
+    }
     if (this._ended) {
       this._playFromStart();   // finished: replaying from the top is what people expect
       return;
     }
     if (this._started) {
-      // Resume where it left off — including when the paused frame was the muted preview.
-      this._beginPlayStart();
-      if (!this._unmuted) {
-        this._unmuted = true;
-        this._provider.unmute();   // keep the position, add the sound
-      } else if (this._provider.isMuted && this._provider.isMuted()) {
-        this._provider.unmute();
-      }
+      this._beginPlayStart();  // resume where it left off
+      if (this._provider.isMuted && this._provider.isMuted()) this._provider.unmute();
       this._provider.play();
       this._renderState();
       return;
     }
-    this._playFromStart();     // never played yet
+    this._playFromStart();
   };
 
   VideoPreviewPlayer.prototype._toggleFullscreen = function () {
