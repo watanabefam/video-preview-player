@@ -469,10 +469,6 @@
     var controls = document.createElement('div');
     controls.className = 'vpp-controls';
     controls.innerHTML =
-      '<button type="button" class="vpp-fs-toggle" aria-label="Fullscreen" title="Fullscreen">' +
-      '  <svg class="vpp-ico vpp-ico-fs-enter" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>' +
-      '  <svg class="vpp-ico vpp-ico-fs-exit" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>' +
-      '</button>' +
       '<button type="button" class="vpp-play-toggle" aria-label="Play / Pause">' +
       '  <svg class="vpp-ico vpp-ico-play" viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>' +
       '  <svg class="vpp-ico vpp-ico-pause" viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>' +
@@ -487,7 +483,12 @@
       '    <svg class="vpp-ico vpp-ico-muted" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4 9.91 6.09 12 8.18V4z"/></svg>' +
       '  </button>' +
       '  <input type="range" class="vpp-volume-slider" min="0" max="100" step="5" value="100" aria-label="Volume" />' +
-      '</div>';
+      '</div>' +
+      // Fullscreen sits last so it lands at the bottom-right of the bar.
+      '<button type="button" class="vpp-fs-toggle" aria-label="Fullscreen" title="Fullscreen">' +
+      '  <svg class="vpp-ico vpp-ico-fs-enter" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>' +
+      '  <svg class="vpp-ico vpp-ico-fs-exit" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>' +
+      '</button>';
 
     var watermark = document.createElement('div');
     watermark.className = 'vpp-watermark vpp-watermark--' + o.watermarkPosition;
@@ -658,6 +659,7 @@
     this._provider.onStateChange(function (state) {
       if (state === PROVIDER_STATE.PLAYING) {
         self._ended = false;
+        self._started = true;       // autoplay counts: a pause now resumes rather than restarts
         self._startingPlay = false; // play actually started
         self._scheduleHide();
       } else if (state === PROVIDER_STATE.ENDED) {
@@ -696,17 +698,23 @@
       return;
     }
     if (this._ended) {
-      this._playFromStart();
+      this._playFromStart();   // finished: replaying from the top is what people expect
       return;
     }
     if (this._started) {
+      // Resume where it left off — including when the paused frame was the muted preview.
       this._beginPlayStart();
+      if (!this._unmuted) {
+        this._unmuted = true;
+        this._provider.unmute();   // keep the position, add the sound
+      } else if (this._provider.isMuted && this._provider.isMuted()) {
+        this._provider.unmute();
+      }
       this._provider.play();
-      if (this._unmuted && this._provider.isMuted && this._provider.isMuted()) this._provider.unmute();
       this._renderState();
       return;
     }
-    this._playFromStart();
+    this._playFromStart();     // never played yet
   };
 
   VideoPreviewPlayer.prototype._toggleFullscreen = function () {
