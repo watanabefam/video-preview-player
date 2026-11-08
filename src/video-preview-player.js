@@ -543,10 +543,11 @@
   VideoPreviewPlayer.prototype._bindEvents = function () {
     var self = this;
 
-    // Overlay: clicking the video always replays from the start, with sound.
+    // Overlay click is state-aware. The paused state puts the overlay back on screen, so this
+    // used to be "pause, then click the only visible play button, and lose your place".
     this.overlay.addEventListener('click', function (e) {
       self._interacted = true; // first click unlocks the HUD
-      self._playFromStart(e);
+      self._onOverlayClick(e);
     });
 
     // Play / pause toggle on the bottom bar
@@ -688,6 +689,33 @@
       // Re-render once the transition has completed to keep state in sync.
       setTimeout(function () { self._renderState(); }, 400);
     }
+  };
+
+  VideoPreviewPlayer.prototype._onOverlayClick = function (e) {
+    // Never played: start from the beginning, with sound.
+    if (!this._started) {
+      this._playFromStart(e);
+      return;
+    }
+    // Playing but still silent: this is the "click for sound" overlay — keep the position.
+    if (this._provider.isPlaying()) {
+      if (!this._unmuted) {
+        this._unmuted = true;
+        this._provider.unmute();
+        if (this.options.backdropTransition === 'ripple' && !this.overlay.classList.contains('vpp-overlay--hidden')) {
+          this._rippleOut(e);
+          setTimeout(function () { this.overlay.classList.add('vpp-overlay--hidden'); }.bind(this), 240);
+        } else {
+          this.overlay.classList.add('vpp-overlay--hidden');
+        }
+        this._renderState();
+      } else {
+        this._provider.pause();
+      }
+      return;
+    }
+    // Paused mid-video (or ended -> replay): resume where it was.
+    this._togglePlay();
   };
 
   // Pause resumes where it left off; only the very first play (and a replay after the
