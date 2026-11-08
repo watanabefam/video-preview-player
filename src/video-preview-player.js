@@ -105,7 +105,6 @@
 
   function YouTubeProvider(slot, options) {
     this.slot = slot;
-    this.hit = hit;
     this.options = options;
     this._readyCbs = [];
     this._stateCbs = [];
@@ -196,7 +195,6 @@
    * ------------------------------------------------------------ */
   function HTML5Provider(slot, options) {
     this.slot = slot;
-    this.hit = hit;
     this.options = options;
     this._readyCbs = [];
     this._stateCbs = [];
@@ -558,6 +556,20 @@
     });
 
     // Fullscreen: button (bottom-left) and double-click anywhere on the video.
+    if (this.hit) {
+      this.hit.addEventListener('dblclick', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        self._toggleFullscreen();
+      });
+      this.hit.addEventListener('click', function (e) {
+        // single click on the video (after the intro overlay is gone) toggles playback
+        if (!self._interacted) return;
+        e.stopPropagation();
+        self._togglePlay();
+      });
+    }
+
     if (this.fsToggle) {
       this.fsToggle.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -568,17 +580,6 @@
     this.root.addEventListener('dblclick', function (e) {
       e.preventDefault();
       self._toggleFullscreen();
-    });
-    this.hit.addEventListener('dblclick', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      self._toggleFullscreen();
-    });
-    this.hit.addEventListener('click', function (e) {
-      // single click on the video (after the intro overlay is gone) toggles playback
-      if (!self._interacted) return;
-      e.stopPropagation();
-      self._togglePlay();
     });
     document.addEventListener('fullscreenchange', function () { self._renderFullscreen(); });
     document.addEventListener('webkitfullscreenchange', function () { self._renderFullscreen(); });
